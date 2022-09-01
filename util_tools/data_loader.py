@@ -92,7 +92,31 @@ class data_processer():
                 unif_m_data[:, i, j] = m_data[:, m_lat_idx, m_lon_idx]
         return unif_m_data
 
-        
+    def flatten(self, h_data, l_data, ele_data, lat_lon, days, n_lag, n_pred, task_dim, is_perm=True):
+        # h_data and l_data should be in the same time range
+        task_lat_dim, task_lon_dim = task_dim
+        G_lats, G_lons = lat_lon
+        n_instance = (h_data.shape[0]-n_lag-n_pred+1)*(h_data[1]-task_lat_dim+1)*(h_data[2]-task_lon_dim+1)
+        X_high = []
+        X_low = []
+        X_ele = []
+        # lat, lon, day
+        X_other = []
+
+        Y = []
+        for t in range(n_lag, h_data.shape[0]-n_pred+1):
+            for lat in range(task_lat_dim, h_data.shape[1]+1):
+                for lon in range(task_lon_dim, h_data.shape[2]+1):
+                    X_high.append(h_data[(t-n_lag):t, (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
+                    Y.append(h_data[t:(t+n_pred), (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
+                    X_low.append(l_data[(t-n_lag):t, (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
+                    X_ele.append(ele_data[(lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
+                    X_other.append([G_lats[lat-task_lat_dim], G_lons[lon-task_lon_dim], days[t]])
+        if is_perm:
+            perm = np.random.permutation(len(X_high))
+            return np.array(X_high)[perm], np.array(X_low)[perm], np.array(X_ele)[perm], np.array(X_other)[perm], np.array(Y)[perm]
+        return np.array(X_high), np.array(X_low), np.array(X_ele), np.array(X_other), np.array(Y)
+
     def data_process(self):
         # TODO: unify dimension
         self.unify_m_data()
