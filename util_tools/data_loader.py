@@ -114,8 +114,10 @@ class data_processer():
                     X_other.append([G_lats[lat-task_lat_dim], G_lons[lon-task_lon_dim], days[t]])
         if is_perm:
             perm = np.random.permutation(len(X_high))
-            return np.array(X_high)[perm], np.array(X_low)[perm], np.array(X_ele)[perm], np.array(X_other)[perm], np.array(Y)[perm]
-        return np.array(X_high), np.array(X_low), np.array(X_ele), np.array(X_other), np.array(Y)
+            return np.expand_dims(np.array(X_high), -1)[perm], np.expand_dims(np.array(X_low), -1)[perm], \
+                   np.expand_dims(np.array(X_ele), -1)[perm], np.array(X_other)[perm], np.array(Y)[perm]
+        return np.expand_dims(np.array(X_high), -1), np.expand_dims(np.array(X_low), -1), \
+               np.expand_dims(np.array(X_ele), -1), np.array(X_other), np.array(Y)
 
     def data_process(self):
         # TODO: unify dimension

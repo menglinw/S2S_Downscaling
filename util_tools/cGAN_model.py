@@ -4,6 +4,7 @@ from numpy import zeros
 from numpy import ones
 from numpy.random import randn
 from numpy.random import randint
+import tensorflow as tf
 from keras.datasets.fashion_mnist import load_data
 from keras.optimizers import Adam
 from keras.models import Sequential
@@ -15,43 +16,14 @@ from keras.layers import Conv2DTranspose
 from keras.layers import LeakyReLU
 from keras.layers import Dropout
 
+class Condition_GAN():
+    def __init__(self, Generator, Discriminator):
+        self.Generator = Generator
+        self.Discriminator = Discriminator
 
-# define the standalone discriminator model
-def define_discriminator(in_shape=(28,28,1)):
-    model = Sequential()
-    # downsample
-    model.add(Conv2D(128, (3, 3), strides=(2, 2), padding='same', input_shape=in_shape))
-    model.add(LeakyReLU(alpha=0.2))
-    # downsample
-    model.add(Conv2D(128, (3, 3), strides=(2, 2), padding='same'))
-    model.add(LeakyReLU(alpha=0.2))
-    # classifier
-    model.add(Flatten())
-    model.add(Dropout(0.4))
-    model.add(Dense(1, activation='sigmoid'))
-    # compile model
-    opt = Adam(lr=0.0002, beta_1=0.5)
-    model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
-    return model
+    def define_GAN(self, generator, discriminator):
 
 
-# define the standalone generator model
-def define_generator(latent_dim):
-    model = Sequential()
-    # foundation for 7x7 image
-    n_nodes = 128 * 7 * 7
-    model.add(Dense(n_nodes, input_dim=latent_dim))
-    model.add(LeakyReLU(alpha=0.2))
-    model.add(Reshape((7, 7, 128)))
-    # upsample to 14x14
-    model.add(Conv2DTranspose(128, (4, 4), strides=(2, 2), padding='same'))
-    model.add(LeakyReLU(alpha=0.2))
-    # upsample to 28x28
-    model.add(Conv2DTranspose(128, (4, 4), strides=(2, 2), padding='same'))
-    model.add(LeakyReLU(alpha=0.2))
-    # generate
-    model.add(Conv2D(1, (7, 7), activation='tanh', padding='same'))
-    return model
 
 # define the combined generator and discriminator model, for updating the generator
 def define_gan(generator, discriminator):
@@ -149,3 +121,40 @@ gan_model = define_gan(generator, discriminator)
 dataset = load_real_samples()
 # train model
 train(generator, discriminator, gan_model, dataset, latent_dim)
+
+# define the standalone discriminator model
+def define_discriminator(in_shape=(28,28,1)):
+    model = Sequential()
+    # downsample
+    model.add(Conv2D(128, (3, 3), strides=(2, 2), padding='same', input_shape=in_shape))
+    model.add(LeakyReLU(alpha=0.2))
+    # downsample
+    model.add(Conv2D(128, (3, 3), strides=(2, 2), padding='same'))
+    model.add(LeakyReLU(alpha=0.2))
+    # classifier
+    model.add(Flatten())
+    model.add(Dropout(0.4))
+    model.add(Dense(1, activation='sigmoid'))
+    # compile model
+    opt = Adam(lr=0.0002, beta_1=0.5)
+    model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
+    return model
+
+
+# define the standalone generator model
+def define_generator(latent_dim):
+    model = Sequential()
+    # foundation for 7x7 image
+    n_nodes = 128 * 7 * 7
+    model.add(Dense(n_nodes, input_dim=latent_dim))
+    model.add(LeakyReLU(alpha=0.2))
+    model.add(Reshape((7, 7, 128)))
+    # upsample to 14x14
+    model.add(Conv2DTranspose(128, (4, 4), strides=(2, 2), padding='same'))
+    model.add(LeakyReLU(alpha=0.2))
+    # upsample to 28x28
+    model.add(Conv2DTranspose(128, (4, 4), strides=(2, 2), padding='same'))
+    model.add(LeakyReLU(alpha=0.2))
+    # generate
+    model.add(Conv2D(1, (7, 7), activation='tanh', padding='same'))
+    return model
