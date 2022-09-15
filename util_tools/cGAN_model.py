@@ -5,40 +5,35 @@ from numpy import ones
 from numpy.random import randn
 from numpy.random import randint
 import tensorflow as tf
-from keras.datasets.fashion_mnist import load_data
-from keras.optimizers import Adam
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.layers import Reshape
-from keras.layers import Flatten
-from keras.layers import Conv2D
-from keras.layers import Conv2DTranspose
-from keras.layers import LeakyReLU
-from keras.layers import Dropout
+
 
 class Condition_GAN():
     def __init__(self, Generator, Discriminator):
         self.Generator = Generator
         self.Discriminator = Discriminator
+        self.GAN_model = self.define_GAN(self.Generator, self.Discriminator)
 
-    def define_GAN(self, generator, discriminator):
+    def define_GAN(self, G, D):
+        D.trainable = False
+        high_shape, low_shape, ele_shape, other_shape = G.input_shape
+        high_input = tf.keras.layers.Input(shape=high_shape[1:])
+        low_input = tf.keras.layers.Input(shape=low_shape[1:])
+        ele_input = tf.keras.layers.Input(shape=ele_shape[1:])
+        other_input = tf.keras.layers.Input(shape=other_shape[1:])
+        x = G([high_input, low_input, ele_input, other_input])
+        x = D(x)
+        model = tf.keras.Model([high_input, low_input, ele_input, other_input], x)
+        opt = tf.keras.optimizers.Adam(learning_rate=0.0002, beta_1=0.5)
+        model.compile(loss='binary_crossentropy', optimizer=opt)
+        return model
+
+    def fit(self, epochs, batch_size, X, Y):
+        for i in range(epochs):
+            for j in range(int()):
 
 
 
-# define the combined generator and discriminator model, for updating the generator
-def define_gan(generator, discriminator):
-    # make weights in the discriminator not trainable
-    discriminator.trainable = False
-    # connect them
-    model = Sequential()
-    # add generator
-    model.add(generator)
-    # add the discriminator
-    model.add(discriminator)
-    # compile model
-    opt = Adam(lr=0.0002, beta_1=0.5)
-    model.compile(loss='binary_crossentropy', optimizer=opt)
-    return model
+
 
 # load fashion mnist images
 def load_real_samples():
@@ -157,4 +152,19 @@ def define_generator(latent_dim):
     model.add(LeakyReLU(alpha=0.2))
     # generate
     model.add(Conv2D(1, (7, 7), activation='tanh', padding='same'))
+    return model
+
+# define the combined generator and discriminator model, for updating the generator
+def define_gan(generator, discriminator):
+    # make weights in the discriminator not trainable
+    discriminator.trainable = False
+    # connect them
+    model = Sequential()
+    # add generator
+    model.add(generator)
+    # add the discriminator
+    model.add(discriminator)
+    # compile model
+    opt = Adam(lr=0.0002, beta_1=0.5)
+    model.compile(loss='binary_crossentropy', optimizer=opt)
     return model
