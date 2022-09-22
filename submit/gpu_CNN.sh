@@ -1,9 +1,7 @@
 #!/bin/bash
 #SBATCH --ntasks=1
-#SBATCH --mem=32GB
+#SBATCH --mem=64GB
 #SBATCH --time=48:00:00
-#SBATCH --partition=gpu
-#SBATCH --gres=gpu:2
 #SBATCH --account=mereditf_284
 
 

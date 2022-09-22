@@ -4,6 +4,7 @@ import sys
 import os
 import tensorflow as tf
 import time
+from util_tools.data_loader import data_processer
 
 start = time.time()
 # define necessary parameters
@@ -25,7 +26,7 @@ file_path_country = ['/project/mereditf_284/menglin/Downscale_data/Country_shape
                      '/project/mereditf_284/menglin/Downscale_data/Country_shape/SAU_adm/SAU_adm0.shp']
 
 # load input data
-data_processor = util_tools.data_loader.data_processer()
+data_processor = data_processer()
 g_data, m_data, [G_lats, G_lons, M_lats, M_lons], ele_data = data_processor.load_data(target_var,
                                                                                       file_path_g_05,
                                                                                       file_path_g_06,
