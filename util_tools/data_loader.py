@@ -11,9 +11,8 @@ import pandas as pd
 
 
 class data_processer():
-    def __init__(self,test_proportion, n_lag):
-        self.test_proportion = test_proportion
-        self.n_lag = int(n_lag)
+    def __init__(self):
+        pass
 
     def load_data(self, target_variable, file_path_g_05, file_path_g_06, file_path_m, file_path_ele, file_path_country):
         # load country shape file
@@ -92,7 +91,7 @@ class data_processer():
                 unif_m_data[:, i, j] = m_data[:, m_lat_idx, m_lon_idx]
         return unif_m_data
 
-    def flatten(self, h_data, l_data, ele_data, lat_lon, days, n_lag, n_pred, task_dim, is_perm=True):
+    def flatten(self, h_data, l_data, ele_data, lat_lon, days, n_lag, n_pred, task_dim, is_perm=True, return_Y=True):
         # h_data and l_data should be in the same time range
         task_lat_dim, task_lon_dim = task_dim
         G_lats, G_lons = lat_lon
@@ -104,20 +103,30 @@ class data_processer():
         X_other = []
 
         Y = []
-        for t in range(n_lag, h_data.shape[0]-n_pred+1):
+        end_point = h_data.shape[0]-n_pred if return_Y else h_data.shape[0]
+        for t in range(n_lag-1, end_point):
             for lat in range(task_lat_dim, h_data.shape[1]+1):
                 for lon in range(task_lon_dim, h_data.shape[2]+1):
-                    X_high.append(h_data[(t-n_lag):t, (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
-                    Y.append(h_data[t:(t+n_pred), (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
-                    X_low.append(l_data[(t-n_lag):t, (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
+                    X_high.append(h_data[(t-n_lag+1):t+1, (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
+                    if return_Y:
+                        Y.append(h_data[t+1:(t+n_pred+1), (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
+                    X_low.append(l_data[(t-n_lag+1):t+1, (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
                     X_ele.append(ele_data[(lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
-                    X_other.append([G_lats[lat-task_lat_dim], G_lons[lon-task_lon_dim], days[t]])
+                    X_other.append([G_lats[lat-task_lat_dim], G_lons[lon-task_lon_dim], days[t]%365])
         if is_perm:
             perm = np.random.permutation(len(X_high))
-            return np.expand_dims(np.array(X_high), -1)[perm], np.expand_dims(np.array(X_low), -1)[perm], \
-                   np.expand_dims(np.array(X_ele), -1)[perm], np.array(X_other)[perm], np.array(Y)[perm]
-        return np.expand_dims(np.array(X_high), -1), np.expand_dims(np.array(X_low), -1), \
-               np.expand_dims(np.array(X_ele), -1), np.array(X_other), np.array(Y)
+            if return_Y:
+                return np.expand_dims(np.array(X_high), -1)[perm], np.expand_dims(np.array(X_low), -1)[perm], \
+                       np.expand_dims(np.array(X_ele), -1)[perm], np.array(X_other)[perm], np.array(Y)[perm]
+            else:
+                return np.expand_dims(np.array(X_high), -1)[perm], np.expand_dims(np.array(X_low), -1)[perm], \
+                       np.expand_dims(np.array(X_ele), -1)[perm], np.array(X_other)[perm]
+        if return_Y:
+            return np.expand_dims(np.array(X_high), -1), np.expand_dims(np.array(X_low), -1), \
+                   np.expand_dims(np.array(X_ele), -1), np.array(X_other), np.array(Y)
+        else:
+            return np.expand_dims(np.array(X_high), -1), np.expand_dims(np.array(X_low), -1), \
+                   np.expand_dims(np.array(X_ele), -1), np.array(X_other)
 
     def data_process(self):
         # TODO: unify dimension
