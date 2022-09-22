@@ -1,9 +1,12 @@
-import util_tools
+
 import numpy as np
 import sys
 import os
 import tensorflow as tf
 import time
+if '..' not in sys.path:
+    sys.path.append('..')
+import util_tools
 from util_tools.data_loader import data_processer
 
 start = time.time()
