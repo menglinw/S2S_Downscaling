@@ -1,6 +1,9 @@
 import numpy as np
 import tensorflow as tf
-import data_loader
+import sys
+if '..' not in sys.path:
+    sys.path.append('..')
+from util_tools import data_loader
 
 
 class downscaler():
@@ -25,7 +28,7 @@ class downscaler():
         if l_data.shape[1:] != h_data.shape[1:]:
             l_data = data_processor.unify_m_data(h_data, l_data, G_lats, G_lons, M_lats, M_lons)
         X_high, X_low, X_ele, X_other = data_processor.flatten(h_data[-n_lag:], l_data, ele_data, [G_lats, G_lons],
-                                                               [days[0]],
+                                                               days,
                                                                n_lag=n_lag, n_pred=n_pred, task_dim=task_dim,
                                                                is_perm=False, return_Y=False)
         temp_matrix = np.zeros((n_pred, n_pred, h_data.shape[1], h_data.shape[2]))
@@ -42,7 +45,7 @@ class downscaler():
             h_data = np.concatenate([h_data, np.expand_dims(current_est, 0)], axis=0)
             # TODO: flatten to input data
             X_high, X_low, X_ele, X_other = data_processor.flatten(h_data[-n_lag:], l_data[i+1:],
-                                                                   ele_data, [G_lats, G_lons], [days[i+1]],
+                                                                   ele_data, [G_lats, G_lons], days[i+1:],
                                                                    n_lag=n_lag, n_pred=n_pred, task_dim=task_dim,
                                                                    is_perm=False, return_Y=False)
         return h_data[-(l_data.shape[0]-n_lag):]
