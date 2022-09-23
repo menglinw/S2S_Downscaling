@@ -107,12 +107,17 @@ class data_processer():
         for t in range(n_lag-1, end_point):
             for lat in range(task_lat_dim, h_data.shape[1]+1):
                 for lon in range(task_lon_dim, h_data.shape[2]+1):
-                    X_high.append(h_data[(t-n_lag+1):t+1, (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
-                    if return_Y:
-                        Y.append(h_data[t+1:(t+n_pred+1), (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
-                    X_low.append(l_data[(t-n_lag+1):t+1, (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
-                    X_ele.append(ele_data[(lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
-                    X_other.append([G_lats[lat-task_lat_dim], G_lons[lon-task_lon_dim], days[t]%365])
+                    if h_data[(t-n_lag+1):t+1, (lat-task_lat_dim):lat, (lon-task_lon_dim):lon].shape != (n_lag, task_lat_dim, task_lon_dim):
+                        print('t:', (t-n_lag+1), t+1)
+                        print('lat: ', (lat-task_lat_dim), lat)
+                        print('lon: ', (lon-task_lon_dim), lon)
+                    else:
+                        X_high.append(h_data[(t - n_lag + 1):t + 1, (lat - task_lat_dim):lat, (lon - task_lon_dim):lon])
+                        if return_Y:
+                            Y.append(h_data[t+1:(t+n_pred+1), (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
+                        X_low.append(l_data[(t-n_lag+1):t+1, (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
+                        X_ele.append(ele_data[(lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
+                        X_other.append([G_lats[lat-task_lat_dim], G_lons[lon-task_lon_dim], days[t]%365])
         if is_perm:
             perm = np.random.permutation(len(X_high))
             if return_Y:
