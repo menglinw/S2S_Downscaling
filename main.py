@@ -39,7 +39,9 @@ g_data, m_data, [G_lats, G_lons, M_lats, M_lons], ele_data = data_processor.load
 # unify the spatial dimension of low resolution data to high resolution data
 match_m_data = data_processor.unify_m_data(g_data[:10], m_data, G_lats, G_lons, M_lats, M_lons)
 # only keep the range that is the same as G5NR
-match_m_data = m_data[range(1826, 1826+730), :, :]
+match_m_data = m_data[1826:(1826+730), :, :]
+print('m_data shape:', match_m_data.shape)
+print('g_data shape: ', g_data.shape)
 days = list(range(1, 731))
 
 # train/test split
