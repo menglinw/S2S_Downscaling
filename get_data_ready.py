@@ -11,7 +11,7 @@ from util_tools.data_loader import data_processer
 def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, season, area):
     start = time.time()
     if not os.path.exists(data_cache_path):
-        os.mkdir(data_cache_path)
+        os.makedirs(data_cache_path, exist_ok=True)
     file_path_g_06 = '/project/mereditf_284/menglin/Downscale_data/MERRA2/G5NR_aerosol_variables_over_MiddleEast_daily_20060516-20070515.nc'
     file_path_g_05 = '/project/mereditf_284/menglin/Downscale_data/MERRA2/G5NR_aerosol_variables_over_MiddleEast_daily_20050516-20060515.nc'
     file_path_m = '/project/mereditf_284/menglin/Downscale_data/MERRA2/MERRA2_aerosol_variables_over_MiddleEast_daily_20000516-20180515.nc'
