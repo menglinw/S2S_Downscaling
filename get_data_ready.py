@@ -96,8 +96,8 @@ def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, s
         match_m_data2 = match_m_data[(365+91*3):730]
         days1 = days[91*3:(91*4+1)]
         days2 = days[(365+91*3):730]
-    print('m_data shape:', match_m_data1.shape, match_m_data2)
-    print('g_data shape: ', g_data1.shape, g_data2)
+    print('m_data shape:', match_m_data1.shape, match_m_data2.shape)
+    print('g_data shape: ', g_data1.shape, g_data2.shape)
 
     # train/test split
     n = g_data1.shape[0]-(n_pred-1)-(n_lag) + g_data2.shape[0]-(n_pred-1)-n_lag
@@ -137,12 +137,12 @@ def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, s
         np.save(os.path.join(data_cache_path, 'X_other.npy'), X_other)
         np.save(os.path.join(data_cache_path, 'Y.npy'), Y)
 
-        np.save(os.path.join(data_cache_path, 'test_g_data.npy'), test_g_data)
-        np.save(os.path.join(data_cache_path, 'test_m_data.npy'), test_m_data)
+        np.save(os.path.join(data_cache_path, 'test_g_data.npy'), np.array(test_g_data))
+        np.save(os.path.join(data_cache_path, 'test_m_data.npy'), np.array(test_m_data))
         np.save(os.path.join(data_cache_path, 'test_days.npy'), np.array(test_days))
-        np.save(os.path.join(data_cache_path, 'test_ele.npy'), ele_data)
-        np.save(os.path.join(data_cache_path, 'test_lats.npy'), G_lats)
-        np.save(os.path.join(data_cache_path, 'test_lons.npy'), G_lons)
+        np.save(os.path.join(data_cache_path, 'test_ele.npy'), np.array(ele_data))
+        np.save(os.path.join(data_cache_path, 'test_lats.npy'), np.array(G_lats))
+        np.save(os.path.join(data_cache_path, 'test_lons.npy'), np.array(G_lons))
     else:
         print('Data is processed and saved, skipped data processing!')
     print('Data Processing Time: ', (time.time()-start)/60, 'mins')
