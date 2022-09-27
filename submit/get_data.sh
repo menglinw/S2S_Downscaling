@@ -13,6 +13,6 @@ do
     echo "python3 /scratch1/menglinw/S2S_Downscaling/get_data_ready.py $save_path/Season$season/Area$area $season $area">>batch_run.sh
     echo "python3 /scratch1/menglinw/S2S_Downscaling/get_data_ready.py $save_path/Season$season/Area$area $season $area"
     sbatch batch_run.sh
-    cd cur_path
+    cd $cur_path
   done
 done
