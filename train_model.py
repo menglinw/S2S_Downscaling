@@ -29,6 +29,11 @@ def nnelu(input):
     return tf.add(tf.constant(1, dtype=tf.float32), tf.nn.elu(input))
 
 
+def mapping_to_target_range( x, target_min=0, target_max=1 ) :
+    x02 = tf.keras.backend.tanh(x) + 1 # x in range(0,2)
+    scale = ( target_max-target_min )/2.
+    return  x02 * scale + target_min
+
 def get_generator(n_lag, n_pred, task_dim):
     high_input = tf.keras.Input(shape=(n_lag, task_dim[0], task_dim[1], 1))
     x1 = tf.keras.layers.ConvLSTM2D(16, kernel_size=(3,3), return_sequences=True, activation=tf.keras.layers.LeakyReLU())(high_input)
@@ -49,7 +54,7 @@ def get_generator(n_lag, n_pred, task_dim):
     x = tf.keras.layers.Concatenate(axis=1)([x1, x2, x3, x4])
     x = tf.keras.layers.Dropout(0.5)(x)
     x = tf.keras.layers.Dense(30, activation=tf.keras.layers.LeakyReLU())(x)
-    x = tf.keras.layers.Dense(n_pred*np.prod(task_dim), activation=nnelu)(x)
+    x = tf.keras.layers.Dense(n_pred*np.prod(task_dim), activation=mapping_to_target_range)(x)
     x = tf.keras.layers.Reshape([n_pred, task_dim[0], task_dim[1]])(x)
     model = tf.keras.Model([high_input, low_input, ele_input, other_input], x)
     model.compile(optimizer='adam', loss='mean_absolute_error')
@@ -58,8 +63,8 @@ def get_generator(n_lag, n_pred, task_dim):
 
 generator = get_generator(n_lag, n_pred, task_dim)
 # define callbacks
-lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=1, factor=0.1)
-early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=2)
+lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=2, factor=0.1)
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=4)
 best_save = tf.keras.callbacks.ModelCheckpoint(os.path.join(data_cache_path, 's2s_model'), save_best_only=True, monitor='val_loss', mode='min')
 callbacks = [lr_scheduler, early_stopping, best_save]
 
