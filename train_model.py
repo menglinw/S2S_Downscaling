@@ -67,11 +67,11 @@ def get_generator(n_lag, n_pred, task_dim):
 
 generator = get_generator(n_lag, n_pred, task_dim)
 # define callbacks
-lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=2, factor=0.1)
-early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=4)
+lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=1, factor=0.1)
+early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=2)
 best_save = tf.keras.callbacks.ModelCheckpoint(os.path.join(data_cache_path, 's2s_model'), save_best_only=True, monitor='val_loss', mode='min')
 callbacks = [lr_scheduler, early_stopping, best_save]
 
-history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=100, callbacks=callbacks, validation_split=0.25)
+history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=5, callbacks=callbacks, validation_split=0.25)
 pd.DataFrame(history.history).to_csv(os.path.join(data_cache_path, 'history.csv'))
 print('Training Time: ', (time.time()-start)/60, 'mins')

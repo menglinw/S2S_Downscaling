@@ -1,2 +1,3 @@
 ﻿date,path,note
 10/4/2022,/scratch1/menglinw/Result_10_4,"train with constraind range activation, MAE loss, without dropout, without cGAN fine tune"
+10/4/2022,/scratch1/menglinw/Result_10_4_small,"same as above, but using 64G memory to see if it works and run faster"
