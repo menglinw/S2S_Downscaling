@@ -102,9 +102,9 @@ def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, s
     # train/test split
     n = g_data1.shape[0]-(n_pred-1)-(n_lag) + g_data2.shape[0]-(n_pred-1)-n_lag
     test_n = int(n*test_ratio)
-    test_g_data = g_data2[-test_n:]
-    test_m_data = match_m_data2[-test_n:]
-    test_days = days2[-test_n:]
+    test_g_data = g_data2[-(test_n+n_lag):]
+    test_m_data = match_m_data2[-(test_n+n_lag):]
+    test_days = days2[-(test_n+n_lag):]
 
     g_data2 = g_data2[:-test_n]
     match_m_data2 = match_m_data2[:-test_n]

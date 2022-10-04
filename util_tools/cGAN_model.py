@@ -4,12 +4,13 @@ import tensorflow as tf
 
 
 class Condition_GAN():
-    def __init__(self, Generator, Discriminator):
+    def __init__(self, Generator, Discriminator, lr=0.0002):
         self.Generator = Generator
         self.Discriminator = Discriminator
-        self.GAN_model = self.define_GAN(self.Generator, self.Discriminator)
+        self.lr = lr
+        self.GAN_model = self.define_GAN(self.Generator, self.Discriminator, lr=self.lr)
 
-    def define_GAN(self, G, D):
+    def define_GAN(self, G, D, lr):
         D.trainable = False
         high_shape, low_shape, ele_shape, other_shape = G.input_shape
         high_input = tf.keras.layers.Input(shape=high_shape[1:])
@@ -19,7 +20,7 @@ class Condition_GAN():
         x = G([high_input, low_input, ele_input, other_input])
         x = D(x)
         model = tf.keras.Model([high_input, low_input, ele_input, other_input], x)
-        opt = tf.keras.optimizers.Adam(learning_rate=0.0002, beta_1=0.5)
+        opt = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.5)
         model.compile(loss='binary_crossentropy', optimizer=opt)
         return model
 

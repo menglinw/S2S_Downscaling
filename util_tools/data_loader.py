@@ -29,8 +29,8 @@ class data_processer():
         g_data = np.concatenate((self.data_g5nr_to_array(g05_data, target_var=target_variable),
                                  self.data_g5nr_to_array(g06_data, target_var=target_variable)), axis=0)
         # log and normalize
-        g_data = np.log(g_data)
-        g_data = (g_data - g_data.min()) / (np.quantile(g_data, 0.95) - g_data.min())
+        g_data = np.log10(g_data)
+        g_data = (g_data - g_data.min()) / (g_data.max() - g_data.min())
         # cut G5NR data
         G_lats = g05_data.variables['lat'][:]
         G_lons = g05_data.variables['lon'][:]
@@ -53,8 +53,8 @@ class data_processer():
         m_ncdata = nc.Dataset(file_path_m)
         m_data = m_ncdata.variables[target_variable][:, :, :]
         # log and normalize
-        m_data = np.log(m_data)
-        m_data = (m_data - m_data.min()) / (np.quantile(m_data, 0.95) - m_data.min())
+        m_data = np.log10(m_data)
+        m_data = (m_data - m_data.min()) / (m_data.max() - m_data.min())
         # cut MERRA2 data
         M_lats = m_ncdata.variables['lat'][:]
         M_lons = m_ncdata.variables['lon'][:]

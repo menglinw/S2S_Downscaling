@@ -52,12 +52,16 @@ def get_generator(n_lag, n_pred, task_dim):
     x4 = tf.keras.layers.Dense(8, activation=tf.keras.layers.LeakyReLU())(other_input)
 
     x = tf.keras.layers.Concatenate(axis=1)([x1, x2, x3, x4])
-    x = tf.keras.layers.Dropout(0.5)(x)
+    # x = tf.keras.layers.Dropout(0.5)(x)
     x = tf.keras.layers.Dense(30, activation=tf.keras.layers.LeakyReLU())(x)
-    x = tf.keras.layers.Dense(n_pred*np.prod(task_dim), activation=nnelu)(x)
+    x = tf.keras.layers.Dense(30, activation=tf.keras.layers.LeakyReLU())(x)
+    x = tf.keras.layers.Dense(30, activation=tf.keras.layers.LeakyReLU())(x)
+    x = tf.keras.layers.Dense(30, activation=tf.keras.layers.LeakyReLU())(x)
+    x = tf.keras.layers.Dense(n_pred*np.prod(task_dim), activation=mapping_to_target_range)(x)
     x = tf.keras.layers.Reshape([n_pred, task_dim[0], task_dim[1]])(x)
     model = tf.keras.Model([high_input, low_input, ele_input, other_input], x)
-    model.compile(optimizer='adam', loss='mean_absolute_percentage_error')
+    opt = tf.keras.optimizers.Adam(learning_rate=0.005)
+    model.compile(optimizer=opt, loss='mean_absolute_error')
     return model
 
 
