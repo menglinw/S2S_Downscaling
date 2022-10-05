@@ -48,21 +48,25 @@ def read_and_save(data_cache_path):
     d_data1, t_data1 = read_downscale_data(data_cache_path, 'Season1')
     np.save(os.path.join(data_cache_path, 'Season1_d_data.npy'), d_data1)
     np.save(os.path.join(data_cache_path, 'Season1_t_data.npy'), t_data1)
+    print('-------------Season 1---------------------')
     evaluate(d_data1, t_data1)
 
     d_data2, t_data2 = read_downscale_data(data_cache_path, 'Season2')
     np.save(os.path.join(data_cache_path, 'Season2_d_data.npy'), d_data2)
     np.save(os.path.join(data_cache_path, 'Season2_t_data.npy'), t_data2)
+    print('-------------Season 2---------------------')
     evaluate(d_data2, t_data2)
 
     d_data3, t_data3 = read_downscale_data(data_cache_path, 'Season3')
     np.save(os.path.join(data_cache_path, 'Season3_d_data.npy'), d_data3)
     np.save(os.path.join(data_cache_path, 'Season3_t_data.npy'), t_data3)
+    print('-------------Season 3---------------------')
     evaluate(d_data3, t_data3)
 
     d_data4, t_data4 = read_downscale_data(data_cache_path, 'Season4')
     np.save(os.path.join(data_cache_path, 'Season4_d_data.npy'), d_data4)
     np.save(os.path.join(data_cache_path, 'Season4_t_data.npy'), t_data4)
+    print('-------------Season 4---------------------')
     evaluate(d_data4, t_data4)
 
 
