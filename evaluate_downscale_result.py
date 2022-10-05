@@ -40,7 +40,7 @@ def evaluate(d_data, t_data):
     n_lag = t_data.shape[0] - d_data.shape[0]
     for i in range(d_data.shape[0]):
         r2, p = rsquared(t_data[n_lag+i].reshape(np.prod(t_data.shape[1:])),
-                         d_data[i].reshpae(np.prod(d_data.shape[1:])))
+                         d_data[i].reshape(np.prod(d_data.shape[1:])))
         print('Day', i+1, ': ',  r2)
 
 
