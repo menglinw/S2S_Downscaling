@@ -72,6 +72,6 @@ early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=2
 best_save = tf.keras.callbacks.ModelCheckpoint(os.path.join(data_cache_path, 's2s_model'), save_best_only=True, monitor='val_loss', mode='min')
 callbacks = [lr_scheduler, early_stopping, best_save]
 
-history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=5, callbacks=callbacks, validation_split=0.25)
+history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=1, callbacks=callbacks, validation_split=0.25)
 pd.DataFrame(history.history).to_csv(os.path.join(data_cache_path, 'history.csv'))
 print('Training Time: ', (time.time()-start)/60, 'mins')
