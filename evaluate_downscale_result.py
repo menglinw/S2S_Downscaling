@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import sys
-
+from scipy import stats
 
 def reconstruc_downscale(data1, data2, data3, data4):
     data_left = np.concatenate([data1, data2], axis=1)
@@ -30,26 +30,40 @@ def read_downscale_data(data_cache_path, season):
     t_data = reconstruc_downscale(true_data1, true_data2, true_data3, true_data4)
     return d_data, t_data
 
+
+def rsquared(x, y):
+    slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
+    return((r_value**2, p_value))
+
+
 def evaluate(d_data, t_data):
-    pass
+    n_lag = t_data.shape[0] - d_data.shape[0]
+    for i in range(d_data.shape[0]):
+        r2, p = rsquared(t_data[n_lag+i].reshape(np.prod(t_data.shape[1:])),
+                         d_data[i].reshpae(np.prod(d_data.shape[1:])))
+        print('Day', i+1, ': ',  r2)
 
 
 def read_and_save(data_cache_path):
     d_data1, t_data1 = read_downscale_data(data_cache_path, 'Season1')
     np.save(os.path.join(data_cache_path, 'Season1_d_data.npy'), d_data1)
     np.save(os.path.join(data_cache_path, 'Season1_t_data.npy'), t_data1)
+    evaluate(d_data1, t_data1)
 
     d_data2, t_data2 = read_downscale_data(data_cache_path, 'Season2')
     np.save(os.path.join(data_cache_path, 'Season2_d_data.npy'), d_data2)
     np.save(os.path.join(data_cache_path, 'Season2_t_data.npy'), t_data2)
+    evaluate(d_data2, t_data2)
 
     d_data3, t_data3 = read_downscale_data(data_cache_path, 'Season3')
     np.save(os.path.join(data_cache_path, 'Season3_d_data.npy'), d_data3)
     np.save(os.path.join(data_cache_path, 'Season3_t_data.npy'), t_data3)
+    evaluate(d_data3, t_data3)
 
     d_data4, t_data4 = read_downscale_data(data_cache_path, 'Season4')
     np.save(os.path.join(data_cache_path, 'Season4_d_data.npy'), d_data4)
     np.save(os.path.join(data_cache_path, 'Season4_t_data.npy'), t_data4)
+    evaluate(d_data4, t_data4)
 
 
 
