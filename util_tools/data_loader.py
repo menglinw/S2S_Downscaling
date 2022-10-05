@@ -48,6 +48,7 @@ class data_processer():
         # load Elevation
         ele_data = np.load(file_path_ele)
         ele_data = ele_data[latmin_ind - 1:latmax_ind + 1, lonmin_ind:lonmax_ind + 2]
+        ele_data = self.normalize(ele_data)
 
         # load MERRA2, log, normalize
         m_ncdata = nc.Dataset(file_path_m)
@@ -117,7 +118,7 @@ class data_processer():
                             Y.append(h_data[t+1:(t+n_pred+1), (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
                         X_low.append(l_data[(t-n_lag+1):t+1, (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
                         X_ele.append(ele_data[(lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
-                        X_other.append([G_lats[lat-task_lat_dim], G_lons[lon-task_lon_dim], days[t]%365])
+                        X_other.append([G_lats[lat-task_lat_dim], G_lons[lon-task_lon_dim], (days[t]%365)/365])
         if is_perm:
             perm = np.random.permutation(len(X_high))
             if return_Y:
