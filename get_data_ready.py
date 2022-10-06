@@ -149,9 +149,9 @@ def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, s
 
 if __name__ == '__main__':
     # define necessary parameters
-    n_lag = 10
-    n_pred = 3
-    task_dim = [5, 5]
+    n_lag = 15
+    n_pred = 1
+    task_dim = [8, 8]
     target_var = 'DUEXTTAU'
     test_ratio = 0.1
     data_cache_path = sys.argv[1]

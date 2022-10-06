@@ -42,7 +42,7 @@ class downscaler():
             # TODO: get current estimation from different predictions
             current_est = np.sum(np.array([temp_matrix[i, n_pred-i-1] for i in range(n_pred)]), axis=0)
             # normalize current estimation
-            current_est = (current_est - current_est.min())/(current_est.max() - current_est.min())
+            # current_est = (current_est - current_est.min())/(current_est.max() - current_est.min())
             # TODO: update high resolution initialization
             h_data = np.concatenate([h_data, np.expand_dims(current_est, 0)], axis=0)
             # TODO: flatten to input data
