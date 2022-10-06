@@ -61,7 +61,7 @@ def get_generator(n_lag, n_pred, task_dim):
                               activation=tf.keras.layers.LeakyReLU())(x)
     x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
                               activation=tf.keras.layers.LeakyReLU())(x)
-    x = tf.keras.layers.Dense(n_pred*np.prod(task_dim), activation=mapping_to_target_range)(x)
+    x = tf.keras.layers.Dense(n_pred*np.prod(task_dim), activation=nnelu)(x)
     x = tf.keras.layers.Reshape([n_pred, task_dim[0], task_dim[1]])(x)
     model = tf.keras.Model([high_input, low_input, ele_input, other_input], x)
     opt = tf.keras.optimizers.Adam(learning_rate=0.005)

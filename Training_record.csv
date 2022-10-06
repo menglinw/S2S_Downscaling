@@ -3,3 +3,4 @@
 10/4/2022,/scratch1/menglinw/Result_10_4_small,"same as above, but using 64G memory to see if it works and run faster",不好
 10/4/2022,/scratch1/menglinw/Results/10_4_3,train 5 epochs max,最高0.5， 但普遍不好
 10/5/2022,/scratch1/menglinw/Results/10_5_1,"add normalization to elevation, days, train 1 epochs, added bias and initialization to model",
+10/5/2-22,/scratch1/menglinw/Results/10_5_2,"add normalization to elevation, days, train 1 epochs, added bias and initialization to model, nnelu activation",
