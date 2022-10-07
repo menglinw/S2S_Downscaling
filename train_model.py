@@ -88,11 +88,11 @@ if __name__ == '__main__':
     # fine tune 
     pred_input = tf.keras.Input(shape=(n_pred, task_dim[0], task_dim[1]))
     y1 = tf.keras.layers.Flatten()(pred_input)
-    '''
+    
     condition_input = tf.keras.Input(shape=(3))
     y2 = tf.keras.layers.Dense(8, activation='relu')(condition_input)
     y = tf.keras.layers.Concatenate(axis=1)([y1, y2])
-    '''
+    
     y = tf.keras.layers.Dense(8, activation=tf.keras.layers.LeakyReLU(), name='d1')(y1)
     y = tf.keras.layers.Dropout(0.8, name='d2')(y)
     y = tf.keras.layers.Dense(1, activation='sigmoid', name='d3')(y)
