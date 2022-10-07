@@ -94,7 +94,7 @@ if __name__ == '__main__':
     y = tf.keras.layers.Dense(8, activation=tf.keras.layers.LeakyReLU(), name='d1')(y1)
     y = tf.keras.layers.Dropout(0.8, name='d2')(y)
     y = tf.keras.layers.Dense(1, activation='sigmoid', name='d3')(y)
-    discriminator = tf.keras.Model([pred_input], y)
+    discriminator = tf.keras.Model([pred_input], y, name='d')
     discriminator.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
     cGAN = Condition_GAN(generator, discriminator, lr=0.000001)

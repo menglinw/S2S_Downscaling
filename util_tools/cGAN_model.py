@@ -21,7 +21,7 @@ class Condition_GAN():
         x = D(x)
         model1 = tf.keras.Model([high_input, low_input, ele_input, other_input], x)
         opt = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.5)
-        model1.compile(loss='binary_crossentropy', optimizer=opt)
+        model1.compile(loss='binary_crossentropy', optimizer=opt, name='cGAN')
         return model1
 
     def fit(self, epochs, batch_size, X, Y):
