@@ -69,17 +69,20 @@ if __name__ == '__main__':
     X_ele = np.load(os.path.join(data_cache_path, 'X_ele.npy'))
     X_other = np.load(os.path.join(data_cache_path, 'X_other.npy'))
     Y = np.load(os.path.join(data_cache_path, 'Y.npy'))
+    if 's2s_model' in os.listdir(data_cache_path):
+        generator = tf.keras.models.load_model(os.path.join(data_cache_path, 's2s_model'))
+    else:
+        generator = get_generator(n_lag, n_pred, task_dim)
+        # define callbacks
+        lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=1, factor=0.1)
+        early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=2)
+        best_save = tf.keras.callbacks.ModelCheckpoint(os.path.join(data_cache_path, 's2s_model'), save_best_only=True, monitor='val_loss', mode='min')
+        callbacks = [lr_scheduler, early_stopping, best_save]
 
-    generator = get_generator(n_lag, n_pred, task_dim)
-    # define callbacks
-    lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=1, factor=0.1)
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=2)
-    best_save = tf.keras.callbacks.ModelCheckpoint(os.path.join(data_cache_path, 's2s_model'), save_best_only=True, monitor='val_loss', mode='min')
-    callbacks = [lr_scheduler, early_stopping, best_save]
-
-    history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=5, callbacks=callbacks, validation_split=0.2)
-    pd.DataFrame(history.history).to_csv(os.path.join(data_cache_path, 'history.csv'))
-
+        history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=5, callbacks=callbacks, validation_split=0.2)
+        pd.DataFrame(history.history).to_csv(os.path.join(data_cache_path, 'history.csv'))
+    print('Training Time: ', (time.time() - start) / 60, 'mins')
+    start = time.time()
     # fine tune
     pred_input = tf.keras.Input(shape=(n_pred, task_dim[0], task_dim[1]))
     y1 = tf.keras.layers.Flatten()(pred_input)
@@ -95,8 +98,8 @@ if __name__ == '__main__':
     discriminator.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
     cGAN = Condition_GAN(generator, discriminator, lr=0.000001)
-    cGAN.fit(1, 200, [X_high, X_low, X_ele, X_other], Y)
+    cGAN.fit(1, 100, [X_high, X_low, X_ele, X_other], Y)
     generator.save('s2s_model_fine')
 
 
-    print('Training Time: ', (time.time()-start)/60, 'mins')
+    print('cGAN Training Time: ', (time.time()-start)/60, 'mins')
