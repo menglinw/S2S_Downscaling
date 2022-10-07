@@ -19,9 +19,9 @@ class Condition_GAN():
         other_input = tf.keras.layers.Input(shape=other_shape[1:])
         x = G([high_input, low_input, ele_input, other_input])
         x = D(x)
-        model1 = tf.keras.Model([high_input, low_input, ele_input, other_input], x)
+        model1 = tf.keras.Model([high_input, low_input, ele_input, other_input], x, name='cGAN')
         opt = tf.keras.optimizers.Adam(learning_rate=lr, beta_1=0.5)
-        model1.compile(loss='binary_crossentropy', optimizer=opt, name='cGAN')
+        model1.compile(loss='binary_crossentropy', optimizer=opt)
         return model1
 
     def fit(self, epochs, batch_size, X, Y):
