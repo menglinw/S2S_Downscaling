@@ -42,6 +42,13 @@ def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, s
 
     # subset the data
     # area subset
+    lat_id = area//7 + 1 if area%7 != 0 else area//7
+    lon_id = area%7 if area%7 != 0 else 7
+    if lat_id == 4:
+        g_data = g_data[:, 30 * (lat_id - 1):, 30 * (lon_id - 1):30 * lon_id]
+    else:
+        g_data = g_data[:, 30*(lat_id-1):30*lat_id, 30*(lon_id-1):30*lon_id]
+    '''
     if area == 1:
         g_data = g_data[:, :61, :103]
         match_m_data = match_m_data[:, :61, :103]
@@ -66,6 +73,7 @@ def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, s
         ele_data = ele_data[61:, 103:]
         G_lats = G_lats[61:]
         G_lons = G_lons[103:]
+    '''
 
     # season subset
     if season == 1:
@@ -151,7 +159,7 @@ if __name__ == '__main__':
     # define necessary parameters
     n_lag = 15
     n_pred = 1
-    task_dim = [8, 8]
+    task_dim = [5, 5]
     target_var = 'DUEXTTAU'
     test_ratio = 0.1
     data_cache_path = sys.argv[1]

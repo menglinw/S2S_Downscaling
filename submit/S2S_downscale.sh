@@ -1,11 +1,11 @@
 #!/bin/bash
-save_path=/scratch1/menglinw/Results/10_6_1
+save_path=/scratch1/menglinw/Results/10_9_1
 cur_path=`pwd`
 
 for season in 1 2 3 4
 do
   mkdir $save_path/Season$season
-  for area in 1 2 3 4
+  for area in {1..28}
   do
     mkdir $save_path/Season$season/Area$area
     cp batch_run.sh $save_path/Season$season/Area$area
