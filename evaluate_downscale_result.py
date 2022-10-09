@@ -9,30 +9,34 @@ def reconstruc_downscale(data1, data2, data3, data4):
     data = np.concatenate([data_left, data_right], axis=2)
     return data
 
+def read_sub_data(path):
+    downscaled_data1 = np.load(os.path.join(path, 'downscaled_data.npy'))
+    #downscaled_data1f = np.load(os.path.join(data_cache_path, season, 'Area1', 'downscaled_data_fine.npy'))
+    true_data1 = np.load(os.path.join(path, 'test_g_data.npy'))
+    return downscaled_data1, true_data1
+
+
+def read_lon_data(path, lat_id):
+    d_data1, t_data1 = read_sub_data(os.path.join(path, 'Area' + str((lat_id-1)*7)+1))
+    d_data2, t_data2 = read_sub_data(os.path.join(path, 'Area' + str((lat_id - 1) * 7) + 2))
+    d_data3, t_data3 = read_sub_data(os.path.join(path, 'Area' + str((lat_id - 1) * 7) + 3))
+    d_data4, t_data4 = read_sub_data(os.path.join(path, 'Area' + str((lat_id - 1) * 7) + 4))
+    d_data5, t_data5 = read_sub_data(os.path.join(path, 'Area' + str((lat_id - 1) * 7) + 5))
+    d_data6, t_data6 = read_sub_data(os.path.join(path, 'Area' + str((lat_id - 1) * 7) + 6))
+    d_data7, t_data7 = read_sub_data(os.path.join(path, 'Area' + str((lat_id - 1) * 7) + 7))
+    d_data = np.concatenate([d_data1, d_data2, d_data3, d_data4, d_data5, d_data6, d_data7], axis=2)
+    t_data = np.concatenate([t_data1, t_data2, t_data3, t_data4, t_data5, t_data6, t_data7], axis=2)
+    return d_data, t_data
+
 
 def read_downscale_data(data_cache_path, season):
-    # read 4 area downscaled data
-    # read 4 area true data
-    downscaled_data1 = np.load(os.path.join(data_cache_path, season, 'Area1', 'downscaled_data.npy'))
-    #downscaled_data1f = np.load(os.path.join(data_cache_path, season, 'Area1', 'downscaled_data_fine.npy'))
-    true_data1 = np.load(os.path.join(data_cache_path, season, 'Area1', 'test_g_data.npy'))
-
-    downscaled_data2 = np.load(os.path.join(data_cache_path, season, 'Area2', 'downscaled_data.npy'))
-    #downscaled_data2f = np.load(os.path.join(data_cache_path, season, 'Area2', 'downscaled_data_fine.npy'))
-    true_data2 = np.load(os.path.join(data_cache_path, season, 'Area2', 'test_g_data.npy'))
-
-    downscaled_data3 = np.load(os.path.join(data_cache_path, season, 'Area3', 'downscaled_data.npy'))
-    #downscaled_data3f = np.load(os.path.join(data_cache_path, season, 'Area3', 'downscaled_data_fine.npy'))
-    true_data3 = np.load(os.path.join(data_cache_path, season, 'Area3', 'test_g_data.npy'))
-
-    downscaled_data4 = np.load(os.path.join(data_cache_path, season, 'Area4', 'downscaled_data.npy'))
-    #downscaled_data4f = np.load(os.path.join(data_cache_path, season, 'Area4', 'downscaled_data_fine.npy'))
-    true_data4 = np.load(os.path.join(data_cache_path, season, 'Area4', 'test_g_data.npy'))
-
-    #reconstruct and output
-    d_data = reconstruc_downscale(downscaled_data1, downscaled_data2, downscaled_data3, downscaled_data4)
-    #df_data = reconstruc_downscale(downscaled_data1f, downscaled_data2f, downscaled_data3f, downscaled_data4f)
-    t_data = reconstruc_downscale(true_data1, true_data2, true_data3, true_data4)
+    # read 28 area downscaled data
+    d_data1, t_data1 = read_lon_data(os.path.join(data_cache_path, season), 1)
+    d_data2, t_data2 = read_lon_data(os.path.join(data_cache_path, season), 2)
+    d_data3, t_data3 = read_lon_data(os.path.join(data_cache_path, season), 3)
+    d_data4, t_data4 = read_lon_data(os.path.join(data_cache_path, season), 4)
+    d_data = np.concatenate([d_data1, d_data2, d_data3, d_data4], axis=1)
+    t_data = np.concatenate([t_data1, t_data2, t_data3, t_data4], axis=1)
     return d_data, t_data
 
 
