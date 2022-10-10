@@ -36,10 +36,10 @@ class Condition_GAN():
                 D_Output = np.array([0]*batch_size+[1]*batch_size).reshape((2*batch_size, 1))
                 perm = np.random.permutation(2*batch_size)
                 '''
-                self.Discriminator.trainable = True
+
                 d1_loss, _ = self.Discriminator.train_on_batch(batch_Y[:batch_size//15], np.ones((batch_size//15, 1)))
                 d2_loss, _ = self.Discriminator.train_on_batch(fake_Y[:batch_size//15], np.zeros((batch_size//15, 1)))
-                self.Discriminator.trainable = False
+                print('finish discriminator training')
                 g_loss = self.GAN_model.train_on_batch(batch_X, np.array([0]*batch_size).reshape((batch_size, 1)))
                 print('Epoch:%d, batch:%d/%d, real_loss=%.3f, fake_loss=%.3f, g_loss=%.3f' %
                       (i + 1, j + 1, int(n/batch_size), d1_loss, d2_loss, g_loss))

@@ -90,7 +90,7 @@ if __name__ == '__main__':
         pd.DataFrame(history.history).to_csv(os.path.join(data_cache_path, 'history.csv'))
     print('Training Time: ', (time.time() - start) / 60, 'mins')
 
-    '''    
+
     start = time.time()
     # fine tune 
     pred_input = tf.keras.Input(shape=(n_pred, task_dim[0], task_dim[1]))
@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
     cGAN = Condition_GAN(generator, discriminator, lr=0.000001)
     cGAN.fit(1, 100, [X_high, X_low, X_ele, X_other], Y)
-    generator.save('s2s_model_fine')'''
+    generator.save('s2s_model_fine')
 
 
     print('cGAN Training Time: ', (time.time()-start)/60, 'mins')
