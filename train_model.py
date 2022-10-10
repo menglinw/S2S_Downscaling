@@ -25,9 +25,7 @@ def get_generator(n_lag, n_pred, task_dim):
     high_input = tf.keras.Input(shape=(n_lag, task_dim[0], task_dim[1], 1))
     x1 = tf.keras.layers.ConvLSTM2D(9, kernel_size=(3, 3), return_sequences=True,
                                     activation=tf.keras.layers.LeakyReLU())(high_input)
-    x1 = tf.keras.layers.ConvLSTM2D(81, kernel_size=(3, 3), return_sequences=True,
-                                    activation=tf.keras.layers.LeakyReLU())(x1)
-    x1 = tf.keras.layers.ConvLSTM2D(81*n_lag, kernel_size=(3,3), activation=tf.keras.layers.LeakyReLU())(x1)
+    x1 = tf.keras.layers.ConvLSTM2D(9, kernel_size=(3, 3), activation=tf.keras.layers.LeakyReLU())(x1)
     x1 = tf.keras.layers.Flatten()(x1)
 
     low_input = tf.keras.Input(shape=(n_lag, task_dim[0], task_dim[1], 1))
@@ -68,7 +66,7 @@ if __name__ == '__main__':
     data_cache_path = sys.argv[1]
     n_lag = 15
     n_pred = 1
-    task_dim = [15, 15]
+    task_dim = [3, 3]
 
     # load data
     X_high = np.load(os.path.join(data_cache_path, 'X_high.npy'))
@@ -107,7 +105,7 @@ if __name__ == '__main__':
     discriminator.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
     cGAN = Condition_GAN(generator, discriminator, lr=0.000001)
-    cGAN.fit(1, 100, [X_high, X_low, X_ele, X_other], Y)
+    cGAN.fit(1, 200, [X_high, X_low, X_ele, X_other], Y)
     generator.save('s2s_model_fine')
 
 
