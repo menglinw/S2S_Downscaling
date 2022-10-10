@@ -11,7 +11,7 @@ class Condition_GAN():
         self.GAN_model = self.define_GAN(self.Generator, self.Discriminator, lr=self.lr)
 
     def define_GAN(self, G, D, lr):
-        D.trainable = False
+        #D.trainable = False
         high_shape, low_shape, ele_shape, other_shape = G.input_shape
         high_input = tf.keras.layers.Input(shape=high_shape[1:])
         low_input = tf.keras.layers.Input(shape=low_shape[1:])
