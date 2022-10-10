@@ -8,3 +8,4 @@
 10/9/2022,/scratch1/menglinw/Results/10_9_1,"train with smaller area, taskdim(5,5), MAE, constraint activation， epochs 5，callback, n_lag15, n_pred1, without Cgan",不好
 10/9/2022,/scratch1/menglinw/Results/10_9_2,"taskdim(10, 10)",比1好点
 10/9/2022,/scratch1/menglinw/Results/10_9_3,"taskdim(15, 15), small training, epochs 20",
+10/9/2022,/scratch1/menglinw/Results/10_9_4,"same as 3, but more complex model",

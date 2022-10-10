@@ -23,11 +23,11 @@ def mapping_to_target_range( x, target_min=0, target_max=1 ) :
 
 def get_generator(n_lag, n_pred, task_dim):
     high_input = tf.keras.Input(shape=(n_lag, task_dim[0], task_dim[1], 1))
-    x1 = tf.keras.layers.ConvLSTM2D(16, kernel_size=(3, 3), return_sequences=True,
+    x1 = tf.keras.layers.ConvLSTM2D(9, kernel_size=(3, 3), return_sequences=True,
                                     activation=tf.keras.layers.LeakyReLU())(high_input)
-    x1 = tf.keras.layers.ConvLSTM2D(32, kernel_size=(3, 3), return_sequences=True,
+    x1 = tf.keras.layers.ConvLSTM2D(81, kernel_size=(3, 3), return_sequences=True,
                                     activation=tf.keras.layers.LeakyReLU())(x1)
-    x1 = tf.keras.layers.ConvLSTM2D(128, kernel_size=(3,3), activation=tf.keras.layers.LeakyReLU())(x1)
+    x1 = tf.keras.layers.ConvLSTM2D(81*n_lag, kernel_size=(3,3), activation=tf.keras.layers.LeakyReLU())(x1)
     x1 = tf.keras.layers.Flatten()(x1)
 
     low_input = tf.keras.Input(shape=(n_lag, task_dim[0], task_dim[1], 1))
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     data_cache_path = sys.argv[1]
     n_lag = 15
     n_pred = 1
-    task_dim = [8, 8]
+    task_dim = [15, 15]
 
     # load data
     X_high = np.load(os.path.join(data_cache_path, 'X_high.npy'))
