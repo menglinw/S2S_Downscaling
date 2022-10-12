@@ -8,6 +8,7 @@
 10/9/2022,/scratch1/menglinw/Results/10_9_1,"train with smaller area, taskdim(5,5), MAE, constraint activation， epochs 5，callback, n_lag15, n_pred1, without Cgan",不好
 10/9/2022,/scratch1/menglinw/Results/10_9_2,"taskdim(10, 10)",比1好点
 10/9/2022,/scratch1/menglinw/Results/10_9_3,"taskdim(15, 15), small training, epochs 20",出现很多1
-10/9/2022,/scratch1/menglinw/Results/10_9_4,"same as 3, but more complex model",training time too long
-10/10/2022,/scratch1/menglinw/Results/10_10_1,"small area, task (3, 3), with cGAN",
-10/10/2022,/scratch1/menglinw/Results/10_10_2,"small area, task (5, 5), with cGAN",
+10/9/2022,/scratch1/menglinw/Results/10_9_4,"same as 3, but more complex model","training time too long, canceled"
+10/10/2022,/scratch1/menglinw/Results/10_10_1,"small area, task (3, 3), with cGAN",error
+10/10/2022,/scratch1/menglinw/Results/10_10_2,"small area, task (5, 5), with cGAN",不好
+10/11/2022,/scratch1/menglinw/Results/10_11_1,"small area, (5, 5), with cGAN, LSTM return sequence, reduce memory to 16G",
