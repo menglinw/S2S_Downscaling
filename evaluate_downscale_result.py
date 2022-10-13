@@ -18,11 +18,11 @@ def read_sub_data(path):
 
 
 def read_lon_data(path, lat_id):
-    d_data1, t_data1 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 7) + 1)))
-    d_data2, t_data2 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 7) + 2)))
-    d_data3, t_data3 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 7) + 3)))
-    d_data4, t_data4 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 7) + 4)))
-    d_data5, t_data5 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 7) + 5)))
+    d_data1, t_data1 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 5) + 1)))
+    d_data2, t_data2 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 5) + 2)))
+    d_data3, t_data3 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 5) + 3)))
+    d_data4, t_data4 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 5) + 4)))
+    d_data5, t_data5 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 5) + 5)))
     d_data = np.concatenate([d_data1, d_data2, d_data3, d_data4, d_data5], axis=2)
     t_data = np.concatenate([t_data1, t_data2, t_data3, t_data4, t_data5], axis=2)
     return d_data, t_data
