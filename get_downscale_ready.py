@@ -10,7 +10,7 @@ from util_tools import downscale
 
 # define parameters
 data_cache_path = sys.argv[1]
-n_lag = 15
+n_lag = 20
 n_pred = 1
 task_dim = [5, 5]
 start = time.time()

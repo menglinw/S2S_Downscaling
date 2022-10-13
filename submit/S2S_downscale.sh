@@ -5,7 +5,7 @@ cur_path=`pwd`
 for season in 1 2 3 4
 do
   mkdir $save_path/Season$season
-  for area in {1..28}
+  for area in {1..15}
   do
     mkdir $save_path/Season$season/Area$area
     cp batch_run.sh $save_path/Season$season/Area$area

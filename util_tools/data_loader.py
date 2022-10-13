@@ -14,14 +14,16 @@ class data_processer():
     def __init__(self):
         pass
 
-    def load_data(self, target_variable, file_path_g_05, file_path_g_06, file_path_m, file_path_ele, file_path_country):
+    def load_data(self, target_variable, file_path_g_05, file_path_g_06, file_path_m, file_path_ele, file_path_country,
+                  normalize=True):
         # load country shape file
         country_shape = gpd.read_file(file_path_country[0])
-        for country_path in file_path_country[1:]:
-            country_shape = pd.concat([country_shape, gpd.read_file(country_path)])
+        if len(file_path_country) > 1:
+            for country_path in file_path_country[1:]:
+                country_shape = pd.concat([country_shape, gpd.read_file(country_path)])
 
         # get outer bound of country shape
-        latmin, lonmin, latmax, lonmax = country_shape.total_bounds
+        lonmin, latmin, lonmax, latmax = country_shape.total_bounds
 
         # load G5NR, log, normalize
         g05_data = nc.Dataset(file_path_g_05)
@@ -41,14 +43,17 @@ class data_processer():
         g_data = g_data[:, latmin_ind - 1:latmax_ind + 1, lonmin_ind:lonmax_ind + 2]
         # load lat&lon of G5NR
         G_lats = g05_data.variables['lat'][latmin_ind - 1:latmax_ind + 1]
-        G_lats = self.normalize(G_lats)
+        if normalize:
+            G_lats = self.normalize(G_lats)
         G_lons = g05_data.variables['lon'][lonmin_ind:lonmax_ind + 2]
-        G_lons = self.normalize(G_lons)
+        if normalize:
+            G_lons = self.normalize(G_lons)
 
         # load Elevation
         ele_data = np.load(file_path_ele)
         ele_data = ele_data[latmin_ind - 1:latmax_ind + 1, lonmin_ind:lonmax_ind + 2]
-        ele_data = self.normalize(ele_data)
+        if normalize:
+            ele_data = self.normalize(ele_data)
 
         # load MERRA2, log, normalize
         m_ncdata = nc.Dataset(file_path_m)
@@ -66,9 +71,11 @@ class data_processer():
         m_data = m_data[:, latmin_ind - 1:latmax_ind + 1, lonmin_ind:lonmax_ind + 2]
         # load lat&lon of MERRA2
         M_lats = m_ncdata.variables['lat'][latmin_ind - 1:latmax_ind + 1]
-        M_lats = self.normalize(M_lats)
+        if normalize:
+            M_lats = self.normalize(M_lats)
         M_lons = m_ncdata.variables['lon'][lonmin_ind:lonmax_ind + 2]
-        M_lons = self.normalize(M_lons)
+        if normalize:
+            M_lons = self.normalize(M_lons)
 
         return g_data, m_data, [G_lats, G_lons, M_lats, M_lons], ele_data
 
@@ -92,7 +99,8 @@ class data_processer():
                 unif_m_data[:, i, j] = m_data[:, m_lat_idx, m_lon_idx]
         return unif_m_data
 
-    def flatten(self, h_data, l_data, ele_data, lat_lon, days, n_lag, n_pred, task_dim, is_perm=True, return_Y=True):
+    def flatten(self, h_data, l_data, ele_data, lat_lon, days, n_lag, n_pred, task_dim, is_perm=True, return_Y=True,
+                stride=1):
         # h_data and l_data should be in the same time range
         task_lat_dim, task_lon_dim = task_dim
         G_lats, G_lons = lat_lon
@@ -106,8 +114,8 @@ class data_processer():
         Y = []
         end_point = h_data.shape[0]-n_pred if return_Y else h_data.shape[0]
         for t in range(n_lag-1, end_point):
-            for lat in range(task_lat_dim, h_data.shape[1]+1):
-                for lon in range(task_lon_dim, h_data.shape[2]+1):
+            for lat in range(task_lat_dim, h_data.shape[1]+1, stride):
+                for lon in range(task_lon_dim, h_data.shape[2]+1, stride):
                     if h_data[(t-n_lag+1):t+1, (lat-task_lat_dim):lat, (lon-task_lon_dim):lon].shape != (n_lag, task_lat_dim, task_lon_dim):
                         print('t:', (t-n_lag+1), t+1)
                         print('lat: ', (lat-task_lat_dim), lat)

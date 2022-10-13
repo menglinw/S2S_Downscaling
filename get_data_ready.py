@@ -42,20 +42,14 @@ def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, s
 
     # subset the data
     # area subset
-    lat_id = area//7 + 1 if area%7 != 0 else area//7
-    lon_id = area%7 if area%7 != 0 else 7
-    if lat_id == 4:
-        g_data = g_data[:, 30 * (lat_id - 1):, 30 * (lon_id - 1):30 * lon_id]
-        match_m_data = match_m_data[:, 30 * (lat_id - 1):, 30 * (lon_id - 1):30 * lon_id]
-        ele_data = ele_data[30 * (lat_id - 1):, 30 * (lon_id - 1):30 * lon_id]
-        G_lats = G_lats[30 * (lat_id - 1):]
-        G_lons = G_lons[30 * (lon_id - 1):30 * lon_id]
-    else:
-        g_data = g_data[:, 30*(lat_id-1):30*lat_id, 30*(lon_id-1):30*lon_id]
-        match_m_data = match_m_data[:, 30*(lat_id-1):30*lat_id, 30*(lon_id-1):30*lon_id]
-        ele_data = ele_data[30*(lat_id-1):30*lat_id, 30*(lon_id-1):30*lon_id]
-        G_lats = G_lats[30*(lat_id-1):30*lat_id]
-        G_lons = G_lons[30*(lon_id-1):30*lon_id]
+    lat_id = area//3 + 1 if area%3 != 0 else area//3
+    lon_id = area%3 if area%3 != 0 else 3
+
+    g_data = g_data[:, 120 * (lat_id - 1):120 * lat_id, 130 * (lon_id - 1):130 * lon_id]
+    match_m_data = match_m_data[:, 120 * (lat_id - 1):120 * lat_id, 130 * (lon_id - 1):130 * lon_id]
+    ele_data = ele_data[120 * (lat_id - 1):120 * lat_id, 130 * (lon_id - 1):130 * lon_id]
+    G_lats = G_lats[120 * (lat_id - 1):120 * lat_id]
+    G_lons = G_lons[130 * (lon_id - 1):130 * lon_id]
     '''
     if area == 1:
         g_data = g_data[:, :61, :103]
@@ -165,7 +159,7 @@ def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, s
 
 if __name__ == '__main__':
     # define necessary parameters
-    n_lag = 15
+    n_lag = 20
     n_pred = 1
     task_dim = [5, 5]
     target_var = 'DUEXTTAU'
