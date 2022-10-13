@@ -10,29 +10,32 @@ def reconstruc_downscale(data1, data2, data3, data4):
     data = np.concatenate([data_left, data_right], axis=2)
     return data
 
-def read_sub_data(path):
-    downscaled_data1 = np.load(os.path.join(path, 'downscaled_data.npy'))
-    #downscaled_data1f = np.load(os.path.join(data_cache_path, season, 'Area1', 'downscaled_data_fine.npy'))
+def read_sub_data(path, fine=False):
+    if fine:
+        downscaled_data1 = np.load(os.path.join(path, 'downscaled_data_fine.npy'))
+    else:
+        downscaled_data1 = np.load(os.path.join(path, 'downscaled_data.npy'))
+
     true_data1 = np.load(os.path.join(path, 'test_g_data.npy'))
     return downscaled_data1, true_data1
 
 
-def read_lon_data(path, lat_id):
-    d_data1, t_data1 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 5) + 1)))
-    d_data2, t_data2 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 5) + 2)))
-    d_data3, t_data3 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 5) + 3)))
-    d_data4, t_data4 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 5) + 4)))
-    d_data5, t_data5 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 5) + 5)))
+def read_lon_data(path, lat_id, fine=False):
+    d_data1, t_data1 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 5) + 1)), fine)
+    d_data2, t_data2 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 5) + 2)), fine)
+    d_data3, t_data3 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 5) + 3)), fine)
+    d_data4, t_data4 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 5) + 4)), fine)
+    d_data5, t_data5 = read_sub_data(os.path.join(path, 'Area' + str(((lat_id - 1) * 5) + 5)), fine)
     d_data = np.concatenate([d_data1, d_data2, d_data3, d_data4, d_data5], axis=2)
     t_data = np.concatenate([t_data1, t_data2, t_data3, t_data4, t_data5], axis=2)
     return d_data, t_data
 
 
-def read_downscale_data(data_cache_path, season):
+def read_downscale_data(data_cache_path, season, fine=False):
     # read 28 area downscaled data
-    d_data1, t_data1 = read_lon_data(os.path.join(data_cache_path, season), 1)
-    d_data2, t_data2 = read_lon_data(os.path.join(data_cache_path, season), 2)
-    d_data3, t_data3 = read_lon_data(os.path.join(data_cache_path, season), 3)
+    d_data1, t_data1 = read_lon_data(os.path.join(data_cache_path, season), 1, fine)
+    d_data2, t_data2 = read_lon_data(os.path.join(data_cache_path, season), 2, fine)
+    d_data3, t_data3 = read_lon_data(os.path.join(data_cache_path, season), 3, fine)
     d_data = np.concatenate([d_data1, d_data2, d_data3], axis=1)
     t_data = np.concatenate([t_data1, t_data2, t_data3], axis=1)
     return d_data, t_data
@@ -60,31 +63,39 @@ def evaluate(d_data, t_data):
     print('Avg:', np.mean(r2_list), np.mean(rmse_list))
 
 
-def read_and_save(data_cache_path):
-    d_data1, t_data1 = read_downscale_data(data_cache_path, 'Season1')
-    np.save(os.path.join(data_cache_path, 'Season1_d_data.npy'), d_data1)
-    #np.save(os.path.join(data_cache_path, 'Season1_df_data.npy'), df_data1)
+def read_and_save(data_cache_path, fine=False):
+    d_data1, t_data1 = read_downscale_data(data_cache_path, 'Season1', fine)
+    if fine:
+        np.save(os.path.join(data_cache_path, 'Season1_d_data_fine.npy'), d_data1)
+    else:
+        np.save(os.path.join(data_cache_path, 'Season1_d_data.npy'), d_data1)
     np.save(os.path.join(data_cache_path, 'Season1_t_data.npy'), t_data1)
     print('-------------Season 1---------------------')
     evaluate(d_data1, t_data1)
 
-    d_data2,  t_data2 = read_downscale_data(data_cache_path, 'Season2')
-    np.save(os.path.join(data_cache_path, 'Season2_d_data.npy'), d_data2)
-    #np.save(os.path.join(data_cache_path, 'Season2_df_data.npy'), df_data2)
+    d_data2,  t_data2 = read_downscale_data(data_cache_path, 'Season2', fine)
+    if fine:
+        np.save(os.path.join(data_cache_path, 'Season2_d_data_fine.npy'), d_data2)
+    else:
+        np.save(os.path.join(data_cache_path, 'Season2_d_data.npy'), d_data2)
     np.save(os.path.join(data_cache_path, 'Season2_t_data.npy'), t_data2)
     print('-------------Season 2---------------------')
     evaluate(d_data2, t_data2)
 
-    d_data3, t_data3 = read_downscale_data(data_cache_path, 'Season3')
-    np.save(os.path.join(data_cache_path, 'Season3_d_data.npy'), d_data3)
-    #np.save(os.path.join(data_cache_path, 'Season3_df_data.npy'), df_data3)
+    d_data3, t_data3 = read_downscale_data(data_cache_path, 'Season3', fine)
+    if fine:
+        np.save(os.path.join(data_cache_path, 'Season3_d_data_fine.npy'), d_data3)
+    else:
+        np.save(os.path.join(data_cache_path, 'Season3_d_data.npy'), d_data3)
     np.save(os.path.join(data_cache_path, 'Season3_t_data.npy'), t_data3)
     print('-------------Season 3---------------------')
     evaluate(d_data3, t_data3)
 
     d_data4, t_data4 = read_downscale_data(data_cache_path, 'Season4')
-    np.save(os.path.join(data_cache_path, 'Season4_d_data.npy'), d_data4)
-    #np.save(os.path.join(data_cache_path, 'Season4_df_data.npy'), df_data4)
+    if fine:
+        np.save(os.path.join(data_cache_path, 'Season4_d_data_fine.npy'), d_data4)
+    else:
+        np.save(os.path.join(data_cache_path, 'Season4_d_data.npy'), d_data4)
     np.save(os.path.join(data_cache_path, 'Season4_t_data.npy'), t_data4)
     print('-------------Season 4---------------------')
     evaluate(d_data4, t_data4)
@@ -93,4 +104,6 @@ def read_and_save(data_cache_path):
 
 if __name__ == '__main__':
     data_cache_path = sys.argv[1]
-    read_and_save(data_cache_path)
+    read_and_save(data_cache_path, fine=False)
+    print('++++++++++++++++++++Fine Tune Result++++++++++++++++++++++++++++')
+    read_and_save(data_cache_path, fine=True)
