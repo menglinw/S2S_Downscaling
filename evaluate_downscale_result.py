@@ -2,8 +2,7 @@ import numpy as np
 import os
 import sys
 from scipy import stats
-import matplotlib.pyplot as plt
-from mpl_toolkits.basemap import Basemap
+
 
 def reconstruc_downscale(data1, data2, data3, data4):
     data_left = np.concatenate([data1, data2], axis=1)
