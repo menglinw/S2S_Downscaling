@@ -130,11 +130,11 @@ def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, s
         X_high1, X_low1, X_ele1, X_other1, Y1 = data_processor.flatten(g_data1, match_m_data1, ele_data,
                                                                   [G_lats, G_lons], days1, n_lag=n_lag,
                                                                   n_pred=n_pred, task_dim=task_dim,
-                                                                  is_perm=True, return_Y=True)
+                                                                  is_perm=True, return_Y=True, stride=2)
         X_high2, X_low2, X_ele2, X_other2, Y2 = data_processor.flatten(g_data2, match_m_data2, ele_data,
                                                                   [G_lats, G_lons], days2, n_lag=n_lag,
                                                                   n_pred=n_pred, task_dim=task_dim,
-                                                                  is_perm=True, return_Y=True)
+                                                                  is_perm=True, return_Y=True, stride=2)
         X_high = np.concatenate([X_high1, X_high2], axis=0)
         X_low = np.concatenate([X_low1, X_low2], axis=0)
         X_ele = np.concatenate([X_ele1, X_ele2], axis=0)

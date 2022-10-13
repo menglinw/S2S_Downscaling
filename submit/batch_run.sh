@@ -1,6 +1,6 @@
 #!/bin/bash
 #SBATCH --ntasks=1
-#SBATCH --mem=16GB
+#SBATCH --mem=32GB
 #SBATCH --time=12:00:00
 #SBATCH --account=mereditf_284
 
