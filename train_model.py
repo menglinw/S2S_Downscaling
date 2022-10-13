@@ -54,7 +54,7 @@ def get_generator(n_lag, n_pred, task_dim):
                               activation=tf.keras.layers.LeakyReLU())(x)
     x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
                               activation=tf.keras.layers.LeakyReLU())(x)
-    x = tf.keras.layers.Dense(n_pred*np.prod(task_dim), activation=mapping_to_target_range)(x)
+    x = tf.keras.layers.Dense(n_pred*np.prod(task_dim), activation=nnelu)(x)
     x = tf.keras.layers.Reshape([n_pred, task_dim[0], task_dim[1]])(x)
     model = tf.keras.Model([high_input, low_input, ele_input, other_input], x)
     opt = tf.keras.optimizers.Adam(learning_rate=0.005)
@@ -67,7 +67,7 @@ if __name__ == '__main__':
     data_cache_path = sys.argv[1]
     n_lag = 20
     n_pred = 1
-    task_dim = [5, 5]
+    task_dim = [3, 3]
 
     # load data
     X_high = np.load(os.path.join(data_cache_path, 'X_high.npy'))
@@ -94,13 +94,12 @@ if __name__ == '__main__':
     # fine tune 
     pred_input = tf.keras.Input(shape=(n_pred, task_dim[0], task_dim[1]))
     y1 = tf.keras.layers.Flatten()(pred_input)
-    
+    '''
     condition_input = tf.keras.Input(shape=(3))
     y2 = tf.keras.layers.Dense(8, activation='relu')(condition_input)
     y = tf.keras.layers.Concatenate(axis=1)([y1, y2])
-    
+    '''
     y = tf.keras.layers.Dense(8, activation=tf.keras.layers.LeakyReLU(), name='d1')(y1)
-    y = tf.keras.layers.Dropout(0.8, name='d2')(y)
     y = tf.keras.layers.Dense(1, activation='sigmoid', name='d3')(y)
     discriminator = tf.keras.Model([pred_input], y, name='d')
     discriminator.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])

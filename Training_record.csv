@@ -12,4 +12,5 @@
 10/10/2022,/scratch1/menglinw/Results/10_10_1,"small area, task (3, 3), with cGAN",error
 10/10/2022,/scratch1/menglinw/Results/10_10_2,"small area, task (5, 5), with cGAN",不好
 10/11/2022,/scratch1/menglinw/Results/10_11_1,"small area, (5, 5), with cGAN, LSTM return sequence, reduce memory to 16G",
-10/12/2022,/scratch1/menglinw/Results/10_12_1,"found a data processing error, fixed, traing with 120*130 area, task dim (5, 5), 5 epochs, stride 2, n_lag 20, n_pred1, with Cgan",
+10/12/2022,/scratch1/menglinw/Results/10_12_1,"found a data processing error, fixed, traing with 120*130 area, task dim (5, 5), 5 epochs, stride 2, n_lag 20, n_pred1, with Cgan",结果不好，换成nnelu，
+10/13/2022,/scratch1/menglinw/Results/10_13_1,"lag20, task dim (3, 3), nnelu activation, all country, optimization error: delete dropout",

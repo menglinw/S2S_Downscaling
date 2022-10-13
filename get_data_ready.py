@@ -8,7 +8,7 @@ import util_tools
 from util_tools.data_loader import data_processer
 
 
-def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, season, area):
+def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, season, area, AFG_only=False):
     start = time.time()
     if not os.path.exists(data_cache_path):
         os.makedirs(data_cache_path, exist_ok=True)
@@ -16,12 +16,15 @@ def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, s
     file_path_g_05 = '/project/mereditf_284/menglin/Downscale_data/MERRA2/G5NR_aerosol_variables_over_MiddleEast_daily_20050516-20060515.nc'
     file_path_m = '/project/mereditf_284/menglin/Downscale_data/MERRA2/MERRA2_aerosol_variables_over_MiddleEast_daily_20000516-20180515.nc'
     file_path_ele = '/project/mereditf_284/menglin/Downscale_data/ELEV/elevation_data.npy'
-    file_path_country = ['/project/mereditf_284/menglin/Downscale_data/Country_shape/AFG_adm/AFG_adm0.shp',
-                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/ARE_adm/ARE_adm0.shp',
-                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/IRQ_adm/IRQ_adm0.shp',
-                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/KWT_adm/KWT_adm0.shp',
-                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/QAT_adm/QAT_adm0.shp',
-                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/SAU_adm/SAU_adm0.shp']
+    if AFG_only:
+        file_path_country = ['/project/mereditf_284/menglin/Downscale_data/Country_shape/AFG_adm/AFG_adm0.shp']
+    else:
+        file_path_country = ['/project/mereditf_284/menglin/Downscale_data/Country_shape/AFG_adm/AFG_adm0.shp',
+                             '/project/mereditf_284/menglin/Downscale_data/Country_shape/ARE_adm/ARE_adm0.shp',
+                             '/project/mereditf_284/menglin/Downscale_data/Country_shape/IRQ_adm/IRQ_adm0.shp',
+                             '/project/mereditf_284/menglin/Downscale_data/Country_shape/KWT_adm/KWT_adm0.shp',
+                             '/project/mereditf_284/menglin/Downscale_data/Country_shape/QAT_adm/QAT_adm0.shp',
+                             '/project/mereditf_284/menglin/Downscale_data/Country_shape/SAU_adm/SAU_adm0.shp']
 
     # load input data
     data_processor = data_processer()
@@ -162,7 +165,7 @@ if __name__ == '__main__':
     # define necessary parameters
     n_lag = 20
     n_pred = 1
-    task_dim = [5, 5]
+    task_dim = [3, 3]
     target_var = 'DUEXTTAU'
     test_ratio = 0.1
     data_cache_path = sys.argv[1]
