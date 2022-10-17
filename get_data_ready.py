@@ -45,15 +45,15 @@ def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, s
 
     # subset the data
     # area subset
-    lat_id = area//5 + 1 if area%5 != 0 else area//5
-    lon_id = area%5 if area%5 != 0 else 5
-    print('lat:', lat_id, 'lon:', lon_id)
-
-    g_data = g_data[:, 120 * (lat_id - 1):120 * lat_id, 130 * (lon_id - 1):130 * lon_id]
-    match_m_data = match_m_data[:, 120 * (lat_id - 1):120 * lat_id, 130 * (lon_id - 1):130 * lon_id]
-    ele_data = ele_data[120 * (lat_id - 1):120 * lat_id, 130 * (lon_id - 1):130 * lon_id]
-    G_lats = G_lats[120 * (lat_id - 1):120 * lat_id]
-    G_lons = G_lons[130 * (lon_id - 1):130 * lon_id]
+    if not AFG_only:
+        lat_id = area // 5 + 1 if area % 5 != 0 else area // 5
+        lon_id = area % 5 if area % 5 != 0 else 5
+        print('lat:', lat_id, 'lon:', lon_id)
+        g_data = g_data[:, 120 * (lat_id - 1):120 * lat_id, 130 * (lon_id - 1):130 * lon_id]
+        match_m_data = match_m_data[:, 120 * (lat_id - 1):120 * lat_id, 130 * (lon_id - 1):130 * lon_id]
+        ele_data = ele_data[120 * (lat_id - 1):120 * lat_id, 130 * (lon_id - 1):130 * lon_id]
+        G_lats = G_lats[120 * (lat_id - 1):120 * lat_id]
+        G_lons = G_lons[130 * (lon_id - 1):130 * lon_id]
     '''
     if area == 1:
         g_data = g_data[:, :61, :103]
@@ -171,5 +171,6 @@ if __name__ == '__main__':
     data_cache_path = sys.argv[1]
     season = int(sys.argv[2])
     area = int(sys.argv[3])
+    AFG_only = True if sys.argv[4] == 'AFG' else False
 
-    get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, season, area)
+    get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, season, area, AFG_only=True)
