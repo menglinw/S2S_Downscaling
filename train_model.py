@@ -106,9 +106,14 @@ if __name__ == '__main__':
     discriminator = tf.keras.Model([pred_input], y, name='d')
     discriminator.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 
-    cGAN = Condition_GAN(generator, discriminator, lr=0.000001)
-    cGAN.fit(1, 200, [X_high, X_low, X_ele, X_other], Y)
-    generator.save('s2s_model_fine')
+    generator2 = get_generator(n_lag, n_pred, task_dim)
+    cGAN = Condition_GAN(generator2, discriminator, lr=0.00001)
+    for i in range(5):
+        history = generator2.fit([X_high, X_low, X_ele, X_other], Y, epochs=1, validation_split=0.2)
+        cGAN.fit(1, 500, [X_high, X_low, X_ele, X_other], Y)
+        print('loss:', np.round(history.history['loss'][0], 5),
+              ' val_loss: ', np.round(history.history['val_loss'][0], 5))
+    generator2.save('s2s_model_fine')
 
 
     print('cGAN Training Time: ', (time.time()-start)/60, 'mins')

@@ -8,6 +8,15 @@ import util_tools
 from util_tools.data_loader import data_processer
 
 
+def id_to_boundary(id):
+    if id == 1:
+        return 0, 135
+    elif id == 2:
+        return 105, 255
+    else:
+        return 225, 360
+
+
 def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, season, area, AFG_only=False):
     start = time.time()
     if not os.path.exists(data_cache_path):
@@ -46,14 +55,18 @@ def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, s
     # subset the data
     # area subset
     if not AFG_only:
-        lat_id = area // 5 + 1 if area % 5 != 0 else area // 5
-        lon_id = area % 5 if area % 5 != 0 else 5
-        print('lat:', lat_id, 'lon:', lon_id)
-        g_data = g_data[:, 120 * (lat_id - 1):120 * lat_id, 130 * (lon_id - 1):130 * lon_id]
-        match_m_data = match_m_data[:, 120 * (lat_id - 1):120 * lat_id, 130 * (lon_id - 1):130 * lon_id]
-        ele_data = ele_data[120 * (lat_id - 1):120 * lat_id, 130 * (lon_id - 1):130 * lon_id]
-        G_lats = G_lats[120 * (lat_id - 1):120 * lat_id]
-        G_lons = G_lons[130 * (lon_id - 1):130 * lon_id]
+        lat_id = area // 3 + 1 if area % 3 != 0 else area // 3
+        lon_id = area % 3 if area % 3 != 0 else 3
+        print('area: ', area, 'lat:', lat_id, 'lon:', lon_id)
+        lat_low, lat_high = id_to_boundary(lat_id)
+        lon_low, lon_high = id_to_boundary(lon_id)
+        print('lat:', lat_low, lat_high)
+        print('lon:', lon_low, lon_high)
+        g_data = g_data[:, lat_low:lat_high, lon_low:lon_high]
+        match_m_data = match_m_data[:, lat_low:lat_high, lon_low:lon_high]
+        ele_data = ele_data[lat_low:lat_high, lon_low:lon_high]
+        G_lats = G_lats[lat_low:lat_high]
+        G_lons = G_lons[lon_low:lon_high]
     '''
     if area == 1:
         g_data = g_data[:, :61, :103]
