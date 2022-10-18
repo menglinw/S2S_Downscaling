@@ -15,5 +15,5 @@ conda activate cGAN_space
 
 python3 /scratch1/menglinw/S2S_Downscaling/get_data_ready.py /scratch1/menglinw/Area1 2 13 AFG
 python3 /scratch1/menglinw/S2S_Downscaling/train_model.py /scratch1/menglinw/Area1
-python3 /scratch1/menglinw/S2S_Downscaling/get_downscale_ready.py /sc
+python3 /scratch1/menglinw/S2S_Downscaling/get_downscale_ready.py /scratch1/menglinw/Area1
 
