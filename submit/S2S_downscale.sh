@@ -1,5 +1,5 @@
 #!/bin/bash
-save_path=/scratch1/menglinw/Results/10_18_1
+save_path=/scratch1/menglinw/Results/10_19_1
 cur_path=`pwd`
 
 for season in 1 2 3 4
@@ -13,8 +13,8 @@ do
     echo "python3 /scratch1/menglinw/S2S_Downscaling/get_data_ready.py $save_path/Season$season/Area$area $season $area NonAFG">>batch_run.sh
     echo "python3 /scratch1/menglinw/S2S_Downscaling/train_model.py $save_path/Season$season/Area$area">>batch_run.sh
     echo "python3 /scratch1/menglinw/S2S_Downscaling/get_downscale_ready.py $save_path/Season$season/Area$area">>batch_run.sh
-    echo "Submited: $save_path/Season$season/Area$area"
     sbatch batch_run.sh
+    echo "Submited: $save_path/Season$season/Area$area"
     cd $cur_path
   done
 
