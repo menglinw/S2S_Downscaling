@@ -186,4 +186,4 @@ if __name__ == '__main__':
     area = int(sys.argv[3])
     AFG_only = True if sys.argv[4] == 'AFG' else False
 
-    get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, season, area, AFG_only=True)
+    get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, season, area, AFG_only=AFG_only)
