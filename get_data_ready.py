@@ -17,7 +17,7 @@ def id_to_boundary(id):
         return 225, 360
 
 
-def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, season, area, AFG_only=False):
+def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, season, area, AFG_only=False, stride=2):
     start = time.time()
     if not os.path.exists(data_cache_path):
         os.makedirs(data_cache_path, exist_ok=True)
@@ -145,11 +145,11 @@ def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, s
         X_high1, X_low1, X_ele1, X_other1, Y1 = data_processor.flatten(g_data1, match_m_data1, ele_data,
                                                                   [G_lats, G_lons], days1, n_lag=n_lag,
                                                                   n_pred=n_pred, task_dim=task_dim,
-                                                                  is_perm=True, return_Y=True, stride=2)
+                                                                  is_perm=True, return_Y=True, stride=stride)
         X_high2, X_low2, X_ele2, X_other2, Y2 = data_processor.flatten(g_data2, match_m_data2, ele_data,
                                                                   [G_lats, G_lons], days2, n_lag=n_lag,
                                                                   n_pred=n_pred, task_dim=task_dim,
-                                                                  is_perm=True, return_Y=True, stride=2)
+                                                                  is_perm=True, return_Y=True, stride=stride)
         X_high = np.concatenate([X_high1, X_high2], axis=0)
         X_low = np.concatenate([X_low1, X_low2], axis=0)
         X_ele = np.concatenate([X_ele1, X_ele2], axis=0)
@@ -176,8 +176,9 @@ def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, s
 if __name__ == '__main__':
     # define necessary parameters
     n_lag = 20
-    n_pred = 1
-    task_dim = [3, 3]
+    n_pred = 3
+    stride = 4
+    task_dim = [10, 10]
     target_var = 'DUEXTTAU'
     test_ratio = 0.1
     data_cache_path = sys.argv[1]
@@ -185,4 +186,5 @@ if __name__ == '__main__':
     area = int(sys.argv[3])
     AFG_only = True if sys.argv[4] == 'AFG' else False
 
-    get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, season, area, AFG_only=AFG_only)
+    get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, season, area, AFG_only=AFG_only,
+             stride=stride)

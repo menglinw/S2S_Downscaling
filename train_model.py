@@ -66,8 +66,8 @@ if __name__ == '__main__':
     # define parameters
     data_cache_path = sys.argv[1]
     n_lag = 20
-    n_pred = 1
-    task_dim = [3, 3]
+    n_pred = 3
+    task_dim = [10, 10]
 
     # load data
     X_high = np.load(os.path.join(data_cache_path, 'X_high.npy'))
@@ -85,7 +85,7 @@ if __name__ == '__main__':
         best_save = tf.keras.callbacks.ModelCheckpoint(os.path.join(data_cache_path, 's2s_model'), save_best_only=True, monitor='val_loss', mode='min')
         callbacks = [lr_scheduler, early_stopping, best_save]
 
-        history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=5, callbacks=callbacks, validation_split=0.2)
+        history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=20, callbacks=callbacks, validation_split=0.2)
         pd.DataFrame(history.history).to_csv(os.path.join(data_cache_path, 'history.csv'))
 
 
@@ -109,8 +109,9 @@ if __name__ == '__main__':
     generator2 = get_generator(n_lag, n_pred, task_dim)
     generator2.fit([X_high, X_low, X_ele, X_other], Y, epochs=1, validation_split=0.2)
     cGAN = Condition_GAN(generator2, discriminator, lr=0.00001)
-    for i in range(5):
-        cGAN.fit(1, 500, [X_high, X_low, X_ele, X_other], Y)
+    for i in range(10):
+        if i%3:
+            cGAN.fit(1, 500, [X_high, X_low, X_ele, X_other], Y)
         history = generator2.fit([X_high, X_low, X_ele, X_other], Y, epochs=1, validation_split=0.2)
         print('loss:', np.round(history.history['loss'][0], 5),
               ' val_loss: ', np.round(history.history['val_loss'][0], 5))

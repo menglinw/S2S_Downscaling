@@ -11,8 +11,8 @@ from util_tools import downscale
 # define parameters
 data_cache_path = sys.argv[1]
 n_lag = 20
-n_pred = 1
-task_dim = [3, 3]
+n_pred = 3
+task_dim = [10, 10]
 start = time.time()
 
 # load data
