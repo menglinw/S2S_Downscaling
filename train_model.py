@@ -88,7 +88,7 @@ def define_discriminator(n_pred, task_dim):
     pred_input = tf.keras.Input(shape=(n_pred, task_dim[0], task_dim[1]))
     y1 = tf.keras.layers.Flatten()(pred_input)
     y = tf.keras.layers.Dense(8, activation=tf.keras.layers.LeakyReLU(), kernel_constraint=const)(y1)
-    y = tf.keras.layers.Dropout(0.5)(y)
+    #y = tf.keras.layers.Dropout(0.5)(y)
     y = tf.keras.layers.Dense(1)(y)
     discriminator = tf.keras.Model([pred_input], y)
     opt = tf.keras.optimizers.RMSprop(learning_rate=0.00005)
@@ -132,7 +132,7 @@ if __name__ == '__main__':
     generator2 = get_generator(n_lag, n_pred, task_dim)
 
     cGAN = Condition_GAN(generator2, discriminator, lr=0.00005)
-    history = cGAN.fit(20, 200, [X_high, X_low, X_ele, X_other], Y)
+    history = cGAN.fit(10, 200, [X_high, X_low, X_ele, X_other], Y)
     history.to_csv(os.path.join(data_cache_path, 'loss_history.csv'))
     generator2.save('s2s_model_fine')
     print('cGAN Training Time: ', (time.time()-start)/60, 'mins')
