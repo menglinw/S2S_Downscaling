@@ -6,21 +6,49 @@ import netCDF4 as nc
 from matplotlib import pyplot as plt
 from math import exp, sqrt, log
 import time
-import geopandas as gpd
 import pandas as pd
+import xarray as xr
+import rioxarray as rxr
+import geopandas as gpd
 
 
 class data_processer():
     def __init__(self):
         pass
 
+    def country_filter(self, sample_image, lats, lons, country_shape):
+        """
+        crop the image with a country shape
+        :param sample_image: image need to be clopped
+        :param lats: latitude of sample image
+        :param lons: longitude of sample image
+        :param country_shape: the shape of country, read by geopandas
+        eg: crop_extent = gpd.read_file(os.path.join(path))
+        :return: cropped image, latitude, longitude
+        """
+        data = xr.DataArray(sample_image, dims=('y', 'x'), coords={'y': lats, 'x': lons})
+        lidar_clipped = data.rio.set_crs(country_shape.crs).rio.clip(country_shape.geometry)
+        return lidar_clipped.values, lidar_clipped['y'].values, lidar_clipped['x'].values
+
     def load_data(self, target_variable, file_path_g_05, file_path_g_06, file_path_m, file_path_ele, file_path_country,
                   normalize=True):
+        '''
+        load G5NR, MERRA2, elevation in the outer bound of given shape file
+        :param target_variable:
+        :param file_path_g_05:
+        :param file_path_g_06:
+        :param file_path_m:
+        :param file_path_ele:
+        :param file_path_country:
+        :param normalize:
+        :return:
+        '''
         # load country shape file
         country_shape = gpd.read_file(file_path_country[0])
         if len(file_path_country) > 1:
             for country_path in file_path_country[1:]:
                 country_shape = pd.concat([country_shape, gpd.read_file(country_path)])
+        self.countryshape = country_shape
 
         # get outer bound of country shape
         lonmin, latmin, lonmax, latmax = country_shape.total_bounds
@@ -99,8 +127,22 @@ class data_processer():
                 unif_m_data[:, i, j] = m_data[:, m_lat_idx, m_lon_idx]
         return unif_m_data
 
+    def cut_country(self, g_data, m_data, lat_lon, ele_data):
+        G_lats, G_lons, M_lats, M_lons = lat_lon
+        if g_data.shape != m_data.shape:
+            raise ValueError('G data and M data are not in a consistent shape!')
+        croped_g = []
+        croped_m = []
+        for i in range(g_data.shape[0]):
+            c_g, _, _ = self.country_filter(g_data[i], G_lats, G_lons, self.countryshape)
+            c_m, _, _ = self.country_filter(m_data[i], G_lats, G_lons, self.countryshape)
+            croped_g.append(c_g)
+            croped_m.append(c_m)
+        croped_ele, lats, lons = self.country_filter(ele_data, G_lats, G_lons, self.countryshape)
+        return np.array(croped_g), np.array(croped_m), croped_ele, lats, lons
+
     def flatten(self, h_data, l_data, ele_data, lat_lon, days, n_lag, n_pred, task_dim, is_perm=True, return_Y=True,
-                stride=1):
+                stride=1, return_nan=False):
         # h_data and l_data should be in the same time range
         task_lat_dim, task_lon_dim = task_dim
         G_lats, G_lons = lat_lon
@@ -121,12 +163,27 @@ class data_processer():
                         print('lat: ', (lat-task_lat_dim), lat)
                         print('lon: ', (lon-task_lon_dim), lon)
                     else:
-                        X_high.append(h_data[(t - n_lag + 1):t + 1, (lat - task_lat_dim):lat, (lon - task_lon_dim):lon])
-                        if return_Y:
-                            Y.append(h_data[t+1:(t+n_pred+1), (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
-                        X_low.append(l_data[(t-n_lag+1):t+1, (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
-                        X_ele.append(ele_data[(lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
-                        X_other.append([G_lats[lat-task_lat_dim], G_lons[lon-task_lon_dim], (days[t]%365)/365])
+                        if return_nan:
+                            X_high.append(h_data[(t - n_lag + 1):t + 1, (lat - task_lat_dim):lat, (lon - task_lon_dim):lon])
+                            if return_Y:
+                                Y.append(h_data[t+1:(t+n_pred+1), (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
+                            X_low.append(l_data[(t-n_lag+1):t+1, (lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
+                            X_ele.append(ele_data[(lat-task_lat_dim):lat, (lon-task_lon_dim):lon])
+                            X_other.append([G_lats[lat-task_lat_dim], G_lons[lon-task_lon_dim], (days[t]%365)/365])
+                        else:
+                            if not np.isnan(h_data[t, lat-1, lon-1]):
+                                X_high.append(
+                                    h_data[(t - n_lag + 1):t + 1, (lat - task_lat_dim):lat, (lon - task_lon_dim):lon])
+                                if return_Y:
+                                    Y.append(h_data[t + 1:(t + n_pred + 1), (lat - task_lat_dim):lat,
+                                             (lon - task_lon_dim):lon])
+                                X_low.append(
+                                    l_data[(t - n_lag + 1):t + 1, (lat - task_lat_dim):lat, (lon - task_lon_dim):lon])
+                                X_ele.append(ele_data[(lat - task_lat_dim):lat, (lon - task_lon_dim):lon])
+
+                                X_other.append(
+                                    [G_lats[lat - task_lat_dim], G_lons[lon - task_lon_dim], (days[t] % 365) / 365])
+
         if is_perm:
             perm = np.random.permutation(len(X_high))
             if return_Y:
@@ -142,13 +199,6 @@ class data_processer():
             return np.expand_dims(np.array(X_high), -1), np.expand_dims(np.array(X_low), -1), \
                    np.expand_dims(np.array(X_ele), -1), np.array(X_other)
 
-    def data_process(self):
-        # TODO: unify dimension
-        self.unify_m_data()
-        # TODO: split tran/test
-        # TODO: write flatten function
-        # TODO: cache data
-        pass
 
 if __name__=="__main__":
     start = time.time()
