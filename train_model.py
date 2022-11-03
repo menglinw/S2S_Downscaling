@@ -149,6 +149,7 @@ if __name__ == '__main__':
     n_lag = 20
     n_pred = 10
     task_dim = [1, 1]
+    latent_space_dim = 10
 
     # load data
     X_high = np.load(os.path.join(data_cache_path, 'X_high.npy'))
@@ -159,7 +160,7 @@ if __name__ == '__main__':
     if 's2s_model' in os.listdir(data_cache_path):
         generator = tf.keras.models.load_model(os.path.join(data_cache_path, 's2s_model'))
     else:
-        generator = get_generator(n_lag, n_pred, task_dim)
+        generator = get_generator(n_lag, n_pred, task_dim, latent_space_dim)
         # define callbacks
         lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=3, factor=0.1)
         early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
