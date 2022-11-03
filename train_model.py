@@ -83,31 +83,45 @@ def get_generator(n_lag, n_pred, task_dim, latent_space_dim):
     # x = tf.keras.layers.Dropout(0.5)(x)
     x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
                               activation=tf.keras.layers.LeakyReLU())(x)
+    x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
                               activation=tf.keras.layers.LeakyReLU())(x)
+    x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
                               activation=tf.keras.layers.LeakyReLU())(x)
+    x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
                               activation=tf.keras.layers.LeakyReLU())(x)
+    x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
                               activation=tf.keras.layers.LeakyReLU())(x)
+    x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
                               activation=tf.keras.layers.LeakyReLU())(x)
-    encoder_mu = tf.keras.layers.Dense(units=latent_space_dim, name="encoder_mu")(x)
-    encoder_log_variance = tf.keras.layers.Dense(units=latent_space_dim, name="encoder_log_variance")(x)
+    x = tf.keras.layers.BatchNormalization()(x)
+    encoder_mu = tf.keras.layers.Dense(units=latent_space_dim,
+                                       kernel_initializer=tf.keras.initializers.Zeros(),
+                                       name="encoder_mu")(x)
+    encoder_log_variance = tf.keras.layers.Dense(units=latent_space_dim,
+                                                 kernel_initializer=tf.keras.initializers.Zeros(),
+                                                 name="encoder_log_variance")(x)
     encoder_output = tf.keras.layers.Lambda(sampling, name="encoder_output")([encoder_mu, encoder_log_variance])
     x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
                               activation=tf.keras.layers.LeakyReLU())(encoder_output)
+    x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
                               activation=tf.keras.layers.LeakyReLU())(x)
+    x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
                               activation=tf.keras.layers.LeakyReLU())(x)
+    x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
                               activation=tf.keras.layers.LeakyReLU())(x)
+    x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.Dense(n_pred * np.prod(task_dim), activation=mapping_abs)(x)
     x = tf.keras.layers.Reshape([n_pred, task_dim[0], task_dim[1]])(x)
     generator = tf.keras.Model([high_input, low_input, ele_input, other_input], x)
-    opt = tf.keras.optimizers.Adam(learning_rate=0.005)
+    opt = tf.keras.optimizers.Adam(learning_rate=0.0005)
     generator.compile(optimizer=opt, loss=loss_func(encoder_mu, encoder_log_variance))
     return generator
 
