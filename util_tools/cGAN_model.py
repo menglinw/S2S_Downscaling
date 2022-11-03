@@ -5,16 +5,17 @@ import pandas as pd
 
 
 class Condition_GAN():
-    def __init__(self, Generator, Discriminator, lr=0.0002):
+    def __init__(self, Generator, Discriminator, loss, lr=0.0002):
         self.Generator = Generator
         self.Discriminator = Discriminator
         self.lr = lr
-        self.GAN_model = self.define_GAN(self.Generator, self.Discriminator, lr=self.lr)
+        self.loss = loss
+        self.GAN_model = self.define_GAN(self.Generator, self.Discriminator, self.loss, lr=self.lr)
 
     def wasserstein_loss(self, y_true, y_pred):
         return tf.keras.backend.mean(y_true * y_pred)
 
-    def define_GAN(self, G, D, lr=0.00005):
+    def define_GAN(self, G, D, loss, lr=0.00005):
         D.trainable = False
         high_shape, low_shape, ele_shape, other_shape = G.input_shape
         high_input = tf.keras.layers.Input(shape=high_shape[1:])
@@ -25,7 +26,7 @@ class Condition_GAN():
         x = D(x_temp)
         model1 = tf.keras.Model([high_input, low_input, ele_input, other_input], [x, x_temp], name='cGAN')
         opt = tf.keras.optimizers.RMSprop(learning_rate=lr)
-        model1.compile(loss=[self.wasserstein_loss, 'mean_absolute_error'], loss_weights=[0.01, 0.99], optimizer=opt)
+        model1.compile(loss=[self.wasserstein_loss, loss], loss_weights=[0.01, 0.99], optimizer=opt)
         return model1
 
     def fit(self, epochs, batch_size, X, Y):

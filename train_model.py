@@ -10,33 +10,70 @@ from util_tools.cGAN_model import Condition_GAN
 import pandas as pd
 
 
+# define helper function
+def mapping_tanh(x):
+    x02 = tf.keras.backend.tanh(x) + 1  # x in range(0,2)
+    scale = 1 / 2.
+    return x02 * scale
 
-# train model
-def nnelu(input):
-    return tf.add(tf.constant(1, dtype=tf.float32), tf.nn.elu(input))
+
+def mapping_abs(x):
+    x02 = x / (1 + tf.keras.backend.abs(x)) + 1
+    scale = 1 / 2.
+    return x02 * scale
 
 
-def mapping_to_target_range( x, target_min=0, target_max=1 ) :
-    x02 = tf.keras.backend.tanh(x) + 1 # x in range(0,2)
-    scale = ( target_max-target_min )/2.
-    return  x02 * scale + target_min
+def nnelu(x):
+    return tf.add(tf.constant(1, dtype=tf.float32), tf.nn.elu(x))
 
-def get_generator(n_lag, n_pred, task_dim):
+
+def sampling(mu_log_variance):
+    mu, log_variance = mu_log_variance
+    epsilon = tf.keras.backend.random_normal(shape=tf.keras.backend.shape(mu), mean=0.0, stddev=1.0)
+    random_sample = mu + tf.keras.backend.exp(log_variance / 2) * epsilon
+    return random_sample
+
+
+def loss_func(encoder_mu, encoder_log_variance):
+    def vae_reconstruction_loss(y_true, y_predict):
+        reconstruction_loss_factor = 1000
+        reconstruction_loss = tf.keras.backend.mean(tf.keras.backend.abs(y_true - y_predict), axis=[1, 2, 3])
+        return reconstruction_loss_factor * reconstruction_loss
+
+    def vae_kl_loss(encoder_mu, encoder_log_variance):
+        kl_loss = -0.5 * tf.keras.backend.sum(1.0 + encoder_log_variance - tf.keras.backend.square(encoder_mu) -
+                                              tf.keras.backend.exp(encoder_log_variance), axis=1)
+        return kl_loss
+
+    def vae_kl_loss_metric(y_true, y_predict):
+        kl_loss = -0.5 * tf.keras.backend.sum(1.0 + encoder_log_variance - tf.keras.backend.square(encoder_mu) -
+                                              tf.keras.backend.exp(encoder_log_variance), axis=1)
+        return kl_loss
+
+    def vae_loss(y_true, y_predict):
+        reconstruction_loss = vae_reconstruction_loss(y_true, y_predict)
+        kl_loss = vae_kl_loss(y_true, y_predict)
+
+        loss = reconstruction_loss + kl_loss
+        return loss
+
+    return vae_loss
+
+def get_generator(n_lag, n_pred, task_dim, latent_space_dim):
     high_input = tf.keras.Input(shape=(n_lag, task_dim[0], task_dim[1], 1))
-    x1 = tf.keras.layers.ConvLSTM2D(32, kernel_size=(3, 3), activation=tf.keras.layers.LeakyReLU())(high_input)
-    #x1 = tf.keras.layers.ConvLSTM2D(16, kernel_size=(3, 3), return_sequences=True,
-    #                                activation=tf.keras.layers.LeakyReLU())(x1)
-    #x1 = tf.keras.layers.Reshape([n_lag, 16])(x1)
-    #x1 = tf.keras.layers.LSTM(32, activation=tf.keras.layers.LeakyReLU())(x1)
+    x1 = tf.keras.layers.Reshape([n_lag, 1])(high_input)
+    x1 = tf.keras.layers.LSTM(32, return_sequences=True, activation=tf.keras.layers.LeakyReLU())(x1)
+    x1 = tf.keras.layers.LSTM(32, return_sequences=True, activation=tf.keras.layers.LeakyReLU())(x1)
+    x1 = tf.keras.layers.LSTM(32, activation=tf.keras.layers.LeakyReLU())(x1)
     x1 = tf.keras.layers.Flatten()(x1)
 
     low_input = tf.keras.Input(shape=(n_lag, task_dim[0], task_dim[1], 1))
-    x2 = tf.keras.layers.ConvLSTM2D(16, kernel_size=(3, 3), return_sequences=False,
-                                    activation=tf.keras.layers.LeakyReLU())(low_input)
+    x2 = tf.keras.layers.Reshape([n_lag, 1])(low_input)
+    x2 = tf.keras.layers.LSTM(16, return_sequences=False, activation=tf.keras.layers.LeakyReLU())(x2)
     x2 = tf.keras.layers.Flatten()(x2)
 
     ele_input = tf.keras.Input(shape=(task_dim[0], task_dim[1], 1))
-    x3 = tf.keras.layers.Conv2D(16, kernel_size=(3, 3), activation=tf.keras.layers.LeakyReLU())(ele_input)
+    x3 = tf.keras.layers.Dense(16, activation=tf.keras.layers.LeakyReLU())(ele_input)
     x3 = tf.keras.layers.Flatten()(x3)
 
     other_input = tf.keras.Input(shape=(3))
@@ -44,10 +81,6 @@ def get_generator(n_lag, n_pred, task_dim):
 
     x = tf.keras.layers.Concatenate(axis=1)([x1, x2, x3, x4])
     # x = tf.keras.layers.Dropout(0.5)(x)
-    x = tf.keras.layers.Dense(60, kernel_initializer="he_normal", use_bias=True,
-                              activation=tf.keras.layers.LeakyReLU())(x)
-    x = tf.keras.layers.Dense(60, kernel_initializer="he_normal", use_bias=True,
-                              activation=tf.keras.layers.LeakyReLU())(x)
     x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
                               activation=tf.keras.layers.LeakyReLU())(x)
     x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
@@ -56,11 +89,26 @@ def get_generator(n_lag, n_pred, task_dim):
                               activation=tf.keras.layers.LeakyReLU())(x)
     x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
                               activation=tf.keras.layers.LeakyReLU())(x)
-    x = tf.keras.layers.Dense(n_pred * np.prod(task_dim), activation=nnelu)(x)
+    x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
+                              activation=tf.keras.layers.LeakyReLU())(x)
+    x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
+                              activation=tf.keras.layers.LeakyReLU())(x)
+    encoder_mu = tf.keras.layers.Dense(units=latent_space_dim, name="encoder_mu")(x)
+    encoder_log_variance = tf.keras.layers.Dense(units=latent_space_dim, name="encoder_log_variance")(x)
+    encoder_output = tf.keras.layers.Lambda(sampling, name="encoder_output")([encoder_mu, encoder_log_variance])
+    x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
+                              activation=tf.keras.layers.LeakyReLU())(encoder_output)
+    x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
+                              activation=tf.keras.layers.LeakyReLU())(x)
+    x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
+                              activation=tf.keras.layers.LeakyReLU())(x)
+    x = tf.keras.layers.Dense(30, kernel_initializer="he_normal", use_bias=True,
+                              activation=tf.keras.layers.LeakyReLU())(x)
+    x = tf.keras.layers.Dense(n_pred * np.prod(task_dim), activation=mapping_abs)(x)
     x = tf.keras.layers.Reshape([n_pred, task_dim[0], task_dim[1]])(x)
     generator = tf.keras.Model([high_input, low_input, ele_input, other_input], x)
     opt = tf.keras.optimizers.Adam(learning_rate=0.005)
-    generator.compile(optimizer=opt, loss='mean_absolute_error')
+    generator.compile(optimizer=opt, loss=loss_func(encoder_mu, encoder_log_variance))
     return generator
 
 # clip model weights to a given hypercube
@@ -99,8 +147,8 @@ if __name__ == '__main__':
     # define parameters
     data_cache_path = sys.argv[1]
     n_lag = 20
-    n_pred = 1
-    task_dim = [3, 3]
+    n_pred = 10
+    task_dim = [1, 1]
 
     # load data
     X_high = np.load(os.path.join(data_cache_path, 'X_high.npy'))
@@ -119,19 +167,19 @@ if __name__ == '__main__':
                                                        monitor='val_loss', mode='min')
         callbacks = [lr_scheduler, early_stopping, best_save]
 
-        history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=20, callbacks=callbacks, validation_split=0.2)
+        history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=40, callbacks=callbacks, validation_split=0.2)
         pd.DataFrame(history.history).to_csv(os.path.join(data_cache_path, 'history.csv'))
 
 
     print('Training Time: ', (time.time() - start) / 60, 'mins')
 
+    # TODO: finish GAN training
+    #start = time.time()
+    #discriminator = define_discriminator(n_pred, task_dim)
+    #generator2 = get_generator(n_lag, n_pred, task_dim)
 
-    start = time.time()
-    discriminator = define_discriminator(n_pred, task_dim)
-    generator2 = get_generator(n_lag, n_pred, task_dim)
-
-    cGAN = Condition_GAN(generator2, discriminator, lr=0.00005)
-    history = cGAN.fit(20, 200, [X_high, X_low, X_ele, X_other], Y)
-    history.to_csv(os.path.join(data_cache_path, 'loss_history.csv'))
-    generator2.save('s2s_model_fine')
-    print('cGAN Training Time: ', (time.time()-start)/60, 'mins')
+    #cGAN = Condition_GAN(generator2, discriminator, lr=0.00005)
+    #history = cGAN.fit(20, 200, [X_high, X_low, X_ele, X_other], Y)
+    #history.to_csv(os.path.join(data_cache_path, 'loss_history.csv'))
+    #generator2.save('s2s_model_fine')
+    #print('cGAN Training Time: ', (time.time()-start)/60, 'mins')
