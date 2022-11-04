@@ -8,6 +8,32 @@ if '..' not in sys.path:
 import util_tools
 from util_tools import downscale
 
+
+def loss_func(encoder_mu, encoder_log_variance):
+    def vae_reconstruction_loss(y_true, y_predict):
+        reconstruction_loss_factor = 1000
+        reconstruction_loss = tf.keras.backend.mean(tf.keras.backend.abs(y_true - y_predict), axis=[1, 2, 3])
+        return reconstruction_loss_factor * reconstruction_loss
+
+    def vae_kl_loss(encoder_mu, encoder_log_variance):
+        kl_loss = -0.5 * tf.keras.backend.sum(1.0 + encoder_log_variance - tf.keras.backend.square(encoder_mu) -
+                                              tf.keras.backend.exp(encoder_log_variance), axis=1)
+        return kl_loss
+
+    def vae_kl_loss_metric(y_true, y_predict):
+        kl_loss = -0.5 * tf.keras.backend.sum(1.0 + encoder_log_variance - tf.keras.backend.square(encoder_mu) -
+                                              tf.keras.backend.exp(encoder_log_variance), axis=1)
+        return kl_loss
+
+    def vae_loss(y_true, y_predict):
+        reconstruction_loss = vae_reconstruction_loss(y_true, y_predict)
+        kl_loss = vae_kl_loss(y_true, y_predict)
+
+        loss = reconstruction_loss + kl_loss
+        return loss
+
+    return vae_loss
+
 # define parameters
 data_cache_path = sys.argv[1]
 n_lag = 20
