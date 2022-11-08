@@ -34,6 +34,7 @@ def loss_func(encoder_mu, encoder_log_variance):
 
     return vae_loss
 
+
 # define parameters
 data_cache_path = sys.argv[1]
 n_lag = 20

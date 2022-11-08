@@ -20,3 +20,4 @@
 10/26/2022,/scratch1/menglinw/Results/10_26_1,"train WGAN, dim (5,5), pred 1, multi LSTM",
 30-Oct,/scratch1/menglinw/Results/10_30_1,"train WGAN, dim (3, 3), pred 1, simgle ConvLSTM",
 11/3/2022,/scratch1/menglinw/Results/11_03_1,"variational mode, pointwise, pred 10",
+8-Nov,/scratch1/menglinw/Results/11_08_1,"variational model with skip, task dim [5, 5], pred1",
