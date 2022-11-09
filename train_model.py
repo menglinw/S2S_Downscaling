@@ -10,6 +10,7 @@ from util_tools.cGAN_model import Condition_GAN
 import pandas as pd
 from util_tools import downscale
 
+
 # define helper function
 def mapping_tanh(x):
     x02 = tf.keras.backend.tanh(x) + 1  # x in range(0,2)
@@ -37,10 +38,10 @@ def sampling(mu_log_variance):
 def loss_func(encoder_mu, encoder_log_variance):
     def vae_reconstruction_loss(y_true, y_predict):
         reconstruction_loss_factor = 1000
-        reconstruction_loss = tf.keras.backend.mean(tf.keras.backend.abs(y_true - y_predict), axis=[1, 2, 3])
+        reconstruction_loss = tf.keras.backend.mean(tf.keras.backend.abs(y_true - y_predict), axis=[1])
         return reconstruction_loss_factor * reconstruction_loss
 
-    def vae_kl_loss(encoder_mu, encoder_log_variance):
+    def vae_kl_loss(y_true, y_predict):
         kl_loss = -0.5 * tf.keras.backend.sum(1.0 + encoder_log_variance - tf.keras.backend.square(encoder_mu) -
                                               tf.keras.backend.exp(encoder_log_variance), axis=1)
         return kl_loss
@@ -126,37 +127,6 @@ def get_generator(n_lag, n_pred, task_dim, latent_space_dim):
     opt = tf.keras.optimizers.Adam(learning_rate=0.0005)
     generator.compile(optimizer=opt, loss=loss_func(est_mu, est_log_variance))
     return generator
-
-# clip model weights to a given hypercube
-class ClipConstraint(tf.keras.constraints.Constraint):
-    # set clip value when initialized
-    def __init__(self, clip_value):
-        self.clip_value = clip_value
-
-    # clip model weights to hypercube
-    def __call__(self, weights):
-        return tf.keras.backend.clip(weights, -self.clip_value, self.clip_value)
-
-    # get the config
-    def get_config(self):
-        return {'clip_value': self.clip_value}
-
-# implementation of wasserstein loss
-def wasserstein_loss(y_true, y_pred):
-    return tf.keras.backend.mean(y_true * y_pred)
-
-
-def define_discriminator(n_pred, task_dim):
-    const = ClipConstraint(0.01)
-    pred_input = tf.keras.Input(shape=(n_pred, task_dim[0], task_dim[1]))
-    y1 = tf.keras.layers.Flatten()(pred_input)
-    y = tf.keras.layers.Dense(8, activation=tf.keras.layers.LeakyReLU(), kernel_constraint=const)(y1)
-    #y = tf.keras.layers.Dropout(0.5)(y)
-    y = tf.keras.layers.Dense(1)(y)
-    discriminator = tf.keras.Model([pred_input], y)
-    opt = tf.keras.optimizers.RMSprop(learning_rate=0.00005)
-    discriminator.compile(loss=wasserstein_loss, optimizer=opt, metrics=['accuracy'])
-    return discriminator
 
 if __name__ == '__main__':
     start = time.time()
