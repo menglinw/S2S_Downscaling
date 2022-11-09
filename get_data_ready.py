@@ -177,8 +177,8 @@ if __name__ == '__main__':
     # define necessary parameters
     n_lag = 20
     n_pred = 1
-    stride = 2
-    task_dim = [5, 5]
+    stride = 4
+    task_dim = [10, 10]
     target_var = 'DUEXTTAU'
     test_ratio = 0.1
     data_cache_path = sys.argv[1]
