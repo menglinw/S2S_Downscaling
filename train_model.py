@@ -9,7 +9,8 @@ import util_tools
 from util_tools.cGAN_model import Condition_GAN
 import pandas as pd
 from util_tools import downscale
-
+from tensorflow.python.framework.ops import disable_eager_execution
+disable_eager_execution()
 
 # define helper function
 def mapping_tanh(x):
