@@ -39,7 +39,7 @@ def sampling(mu_log_variance):
 def loss_func(encoder_mu, encoder_log_variance):
     def vae_reconstruction_loss(y_true, y_predict):
         reconstruction_loss_factor = 1000
-        reconstruction_loss = tf.keras.backend.mean(tf.keras.backend.abs(y_true - y_predict), axis=[1])
+        reconstruction_loss = tf.keras.backend.mean(tf.keras.backend.abs(y_true - y_predict), axis=[1, 2, 3])
         return reconstruction_loss_factor * reconstruction_loss
 
     def vae_kl_loss(y_true, y_predict):
