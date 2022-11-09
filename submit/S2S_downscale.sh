@@ -1,5 +1,5 @@
 #!/bin/bash
-save_path=/scratch1/menglinw/Results/11_08_1
+save_path=/scratch1/menglinw/Results/11_09_1
 cur_path=`pwd`
 
 for season in 1 2 3 4

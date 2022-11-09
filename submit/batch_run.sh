@@ -9,7 +9,7 @@
 module load gcc
 module load intel
 module load cuda
-module load anaconda3
+module load conda
 eval "$(conda shell.bash hook)"
 conda activate cGAN_space
 
