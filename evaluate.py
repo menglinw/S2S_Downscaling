@@ -121,16 +121,16 @@ def evaluate_season(data_cache_path, season, fine=False):
 
 def read_and_save(data_cache_path):
     evaluate_season(data_cache_path, 'Season1', fine=False)
-    evaluate_season(data_cache_path, 'Season1', fine=True)
+    #evaluate_season(data_cache_path, 'Season1', fine=True)
 
     evaluate_season(data_cache_path, 'Season2', fine=False)
-    evaluate_season(data_cache_path, 'Season2', fine=True)
+    #evaluate_season(data_cache_path, 'Season2', fine=True)
 
     evaluate_season(data_cache_path, 'Season3', fine=False)
-    evaluate_season(data_cache_path, 'Season3', fine=True)
+    #evaluate_season(data_cache_path, 'Season3', fine=True)
 
     evaluate_season(data_cache_path, 'Season4', fine=False)
-    evaluate_season(data_cache_path, 'Season4', fine=True)
+    #evaluate_season(data_cache_path, 'Season4', fine=True)
 
 if __name__ == '__main__':
     data_cache_path = sys.argv[1]
