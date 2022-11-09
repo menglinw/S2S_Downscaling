@@ -180,7 +180,7 @@ if __name__ == '__main__':
     stride = 2
     task_dim = [5, 5]
     target_var = 'DUEXTTAU'
-    test_ratio = 0.2
+    test_ratio = 0.1
     data_cache_path = sys.argv[1]
     season = int(sys.argv[2])
     area = int(sys.argv[3])
