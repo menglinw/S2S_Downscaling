@@ -135,8 +135,8 @@ if __name__ == '__main__':
     data_cache_path = sys.argv[1]
     n_lag = 20
     n_pred = 1
-    task_dim = [10, 10]
-    latent_space_dim = 80
+    task_dim = [3, 3]
+    latent_space_dim = 10
 
     # load data
     X_high = np.load(os.path.join(data_cache_path, 'X_high.npy'))
