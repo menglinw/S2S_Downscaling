@@ -135,8 +135,8 @@ if __name__ == '__main__':
     data_cache_path = sys.argv[1]
     n_lag = 20
     n_pred = 1
-    task_dim = [3, 3]
-    latent_space_dim = 10
+    task_dim = [5, 5]
+    latent_space_dim = 50
 
     # load data
     X_high = np.load(os.path.join(data_cache_path, 'X_high.npy'))
@@ -155,7 +155,7 @@ if __name__ == '__main__':
                                                        save_weights_only=True, monitor='val_loss', mode='min')
         callbacks = [lr_scheduler, early_stopping, best_save]
 
-        history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=100, callbacks=callbacks, validation_split=0.2)
+        history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=10, callbacks=callbacks, validation_split=0.2)
         pd.DataFrame(history.history).to_csv(os.path.join(data_cache_path, 'history.csv'))
 
 

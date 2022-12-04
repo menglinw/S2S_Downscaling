@@ -82,7 +82,7 @@ def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, test_ratio, s
     test_set = set(random.sample(avlb_days, int(len(avlb_days)*test_ratio)))
     train_set = avlb_days - test_set
     # save test date
-    np.save('test_days.npy', np.array(test_set))
+    np.save('test_days.npy', np.array(list(test_set)))
     # flatten train data (day by day)
     if 'X_high.npy' not in os.listdir(data_cache_path) or \
             'X_low.npy' not in os.listdir(data_cache_path) or \

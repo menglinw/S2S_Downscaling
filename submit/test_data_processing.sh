@@ -13,4 +13,4 @@ module load conda
 eval "$(conda shell.bash hook)"
 conda activate cGAN_space
 
-python3 /scratch1/menglinw/S2S_Downscaling/get_data_ready.py /scratch1/menglinw/test 2 1 AFG
+python3 /scratch1/menglinw/S2S_Downscaling/train_model.py /scratch1/menglinw/test
