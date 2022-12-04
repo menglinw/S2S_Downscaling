@@ -20,7 +20,7 @@ do
   mkdir $save_path/Season$season/AreaAFG
   cp batch_run.sh $save_path/Season$season/AreaAFG
   cd $save_path/Season$season/AreaAFG
-  echo "python3 /scratch1/menglinw/S2S_Downscaling/get_data_ready.py $save_path/Season$season/AreaAFG 1 1 AFG">>batch_run.sh
+  echo "python3 /scratch1/menglinw/S2S_Downscaling/get_data_ready.py $save_path/Season$season/AreaAFG $season 1 AFG">>batch_run.sh
   echo "python3 /scratch1/menglinw/S2S_Downscaling/train_model.py $save_path/Season$season/AreaAFG">>batch_run.sh
   sbatch batch_run.sh
   echo "Submited: $save_path/Season$season/AreaAFG"
