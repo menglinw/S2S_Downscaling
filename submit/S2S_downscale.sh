@@ -26,5 +26,5 @@ done
 
 
 # downscale
-#echo jids
+echo jids
 #sbatch --dependency=afterok$train_jids YY.sh
