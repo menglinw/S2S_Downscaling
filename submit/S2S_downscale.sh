@@ -5,9 +5,10 @@ cur_path=`pwd`
 # run data processing script
 cp batch_run.sh $save_path/Season$season/Area$area/init.sh
 echo "python3 /scratch1/menglinw/S2S_Downscaling/get_data_ready.py $save_path">>init.sh
-jid1=$(sbatch --parsable init.sh)
+jid1=$(sbatch --parsable --wait init.sh)
 cd $cur_path
 
+wait
 # start training model
 train_jids=""
 for season in 1 2 3 4
