@@ -4,6 +4,7 @@ cur_path=`pwd`
 
 # run data processing script
 cp batch_run.sh $save_path/init.sh
+cd $save_path
 echo "python3 /scratch1/menglinw/S2S_Downscaling/get_data_ready.py $save_path">>init.sh
 jid1=$(sbatch --parsable --wait init.sh)
 cd $cur_path
