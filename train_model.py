@@ -22,6 +22,7 @@ def id_to_boundary(id):
 
 def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, train_set, area, AFG_only=False, stride=2):
     start = time.time()
+    area = int(area)
     if not os.path.exists(data_cache_path):
         os.makedirs(data_cache_path, exist_ok=True)
     file_path_g_06 = '/project/mereditf_284/menglin/Downscale_data/MERRA2/G5NR_aerosol_variables_over_MiddleEast_daily_20060516-20070515.nc'

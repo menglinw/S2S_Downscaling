@@ -19,7 +19,7 @@ do
     cp batch_run.sh $save_path/Season$season/Area$area/train_model.sh
     cd $save_path/Season$season/Area$area
     echo "python3 /scratch1/menglinw/S2S_Downscaling/train_model.py $save_path/Season$season/Area$area">>train_model.sh
-    train_jids="$train_jids:$(sbatch --dependency=afterok:$jid1 train_model.sh)"
+    train_jids="$train_jids:$(sbatch --dependency=afterok:$jid1 --parsable train_model.sh)"
     echo "Submited Model Training: $save_path/Season$season/Area$area"
     cd $cur_path
   done
