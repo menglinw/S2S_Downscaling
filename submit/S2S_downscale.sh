@@ -6,6 +6,7 @@ cur_path=`pwd`
 cp batch_run.sh $save_path/Season$season/Area$area/init.sh
 echo "python3 /scratch1/menglinw/S2S_Downscaling/get_data_ready.py $save_path">>init.sh
 jid1=$(sbatch --parsable init.sh)
+cd $cur_path
 
 # start training model
 train_jids=""
