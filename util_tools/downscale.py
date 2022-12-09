@@ -10,7 +10,7 @@ class downscaler():
     def __init__(self, model):
         self.model = model
 
-    def downscale(self, h_data, l_data, ele_data, lat_lon, days, n_lag, n_pred, task_dim):
+    def downscale(self, h_data, l_data, ele_data, lat_lon, days, n_lag, n_pred, task_dim, n_est=100):
         '''
 
         :param h_data: initalization
@@ -30,27 +30,44 @@ class downscaler():
         X_high, X_low, X_ele, X_other = data_processor.flatten(h_data[-n_lag:], l_data, ele_data, [G_lats, G_lons],
                                                                days,
                                                                n_lag=n_lag, n_pred=n_pred, task_dim=task_dim,
-                                                               is_perm=False, return_Y=False)
-        temp_matrix = np.zeros((n_pred, n_pred, h_data.shape[1], h_data.shape[2]))
+                                                               is_perm=False, return_Y=False, stride=1)
+        var_data = np.zeros_like(h_data)
+        temp_mean_matrix = np.zeros((n_pred, n_pred, h_data.shape[1], h_data.shape[2]))
+        temp_var_matrix = np.zeros((n_pred, n_pred, h_data.shape[1], h_data.shape[2]))
         for i in range(l_data.shape[0]-(n_lag-1)-1): #or l_data.shape[0]-(n_lag-1)-(n_pred-1)
             # TODO: prediction
-            pred_Y = self.model.predict([X_high, X_low, X_ele, X_other])
+            pred_Y = np.zeros((X_high.shape[0], 1, task_dim[0], task_dim[1]))
+            for _ in range(n_est):
+                temp = self.model.predict([X_high, X_low, X_ele, X_other])
+                pred_Y = np.concatenate([pred_Y, temp], axis=1)
+            pred_Y = pred_Y[:, 1:]
+            pred_mean = np.mean(pred_Y, axis=1)
+            pred_var = np.var(pred_Y, axis=1)
+
+            # print('Mean Shape:', pred_mean.shape)
             # TODO: reconstruct predictions at time t back to large image(define a separate function)
-            pred_list = [self._reconstruct(pred_Y[:, j], h_data.shape[1:], task_dim=task_dim) for j in range(n_pred)]
+            pred_mean_list = [self._reconstruct(pred_mean, h_data.shape[1:], task_dim=task_dim) for j in
+                              range(n_pred)]
+            pred_var_list = [self._reconstruct(pred_var, h_data.shape[1:], task_dim=task_dim) for h in
+                              range(n_pred)]
             # TODO: cache predictions
-            temp_matrix = np.concatenate([temp_matrix[1:], np.expand_dims(np.array(pred_list), 0)], axis=0)
+            temp_mean_matrix = np.concatenate([temp_mean_matrix[1:], np.expand_dims(np.array(pred_mean_list), 0)], axis=0)
+            temp_var_matrix = np.concatenate([temp_var_matrix[1:], np.expand_dims(np.array(pred_var_list), 0)],
+                                              axis=0)
             # TODO: get current estimation from different predictions
-            current_est = np.sum(np.array([temp_matrix[i, n_pred-i-1] for i in range(n_pred)]), axis=0)
+            current_mean_est = np.mean(np.array([temp_mean_matrix[k, n_pred-k-1] for k in range(n_pred)]), axis=0)
+            current_var_est = np.mean(np.array([temp_var_matrix[k, n_pred - k - 1] for k in range(n_pred)]), axis=0)
             # normalize current estimation
             # current_est = (current_est - current_est.min())/(current_est.max() - current_est.min())
             # TODO: update high resolution initialization
-            h_data = np.concatenate([h_data, np.expand_dims(current_est, 0)], axis=0)
+            h_data = np.concatenate([h_data, np.expand_dims(current_mean_est, 0)], axis=0)
+            var_data = np.concatenate([var_data, np.expand_dims(current_var_est, 0)], axis=0)
             # TODO: flatten to input data
             X_high, X_low, X_ele, X_other = data_processor.flatten(h_data[-n_lag:], l_data[i+1:],
                                                                    ele_data, [G_lats, G_lons], days[i+1:],
                                                                    n_lag=n_lag, n_pred=n_pred, task_dim=task_dim,
                                                                    is_perm=False, return_Y=False)
-        return h_data[-(l_data.shape[0]-n_lag):]
+        return h_data[-(l_data.shape[0]-n_lag):], var_data[-(l_data.shape[0]-n_lag):]
 
     def _reconstruct(self, pred_Y, org_dim, task_dim):
         '''
@@ -70,6 +87,7 @@ class downscaler():
                 for k, lat in enumerate(range(lat_corner - task_dim[0], lat_corner)):
                     for h, lon in enumerate(range(lon_corner - task_dim[1], lon_corner)):
                         if (lat, lon) not in rec_Y:
+                            #print('lat, lon:', lat, lon)
                             rec_Y.setdefault((lat, lon), [current_mtx[k, h]])
                         else:
                             rec_Y[(lat, lon)].append(current_mtx[k, h])

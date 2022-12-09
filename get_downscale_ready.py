@@ -9,6 +9,10 @@ import util_tools
 from util_tools import downscale
 from tensorflow.python.framework.ops import disable_eager_execution
 disable_eager_execution()
+from util_tools.data_loader import data_processer
+import pandas as pd
+from scipy import stats
+
 
 # define helper function
 def mapping_tanh(x):
@@ -127,29 +131,214 @@ def get_generator(n_lag, n_pred, task_dim, latent_space_dim):
     generator.compile(optimizer=opt, loss=loss_func(est_mu, est_log_variance))
     return generator
 
+def id_to_boundary(id):
+    if id == 1:
+        return 0, 135
+    elif id == 2:
+        return 105, 255
+    else:
+        return 225, 360
 
-# define parameters
-data_cache_path = sys.argv[1]
-n_lag = 20
-n_pred = 1
-task_dim = [5, 5]
-latent_space_dim = 50
-start = time.time()
+def get_data(area):
+    target_var = 'DUEXTTAU'
+    area = int(area)
+    AFG_only = False if area != 0 else True
+    file_path_g_06 = '/project/mereditf_284/menglin/Downscale_data/MERRA2/G5NR_aerosol_variables_over_MiddleEast_daily_20060516-20070515.nc'
+    file_path_g_05 = '/project/mereditf_284/menglin/Downscale_data/MERRA2/G5NR_aerosol_variables_over_MiddleEast_daily_20050516-20060515.nc'
+    file_path_m = '/project/mereditf_284/menglin/Downscale_data/MERRA2/MERRA2_aerosol_variables_over_MiddleEast_daily_20000516-20180515.nc'
+    file_path_ele = '/project/mereditf_284/menglin/Downscale_data/ELEV/elevation_data.npy'
+    if AFG_only:
+        file_path_country = ['/project/mereditf_284/menglin/Downscale_data/Country_shape/AFG_adm/AFG_adm0.shp']
+    else:
+        file_path_country = ['/project/mereditf_284/menglin/Downscale_data/Country_shape/ARE_adm/ARE_adm0.shp',
+                             '/project/mereditf_284/menglin/Downscale_data/Country_shape/IRQ_adm/IRQ_adm0.shp',
+                             '/project/mereditf_284/menglin/Downscale_data/Country_shape/KWT_adm/KWT_adm0.shp',
+                             '/project/mereditf_284/menglin/Downscale_data/Country_shape/QAT_adm/QAT_adm0.shp',
+                             '/project/mereditf_284/menglin/Downscale_data/Country_shape/SAU_adm/SAU_adm0.shp']
 
-# load model (need to test)
-generator = get_generator(n_lag, n_pred, task_dim, latent_space_dim)
-generator.load_weights('s2s_model')
+    # load input data
+    data_processor = data_processer()
+    g_data, m_data, [G_lats, G_lons, M_lats, M_lons], ele_data = data_processor.load_data(target_var,
+                                                                                          file_path_g_05,
+                                                                                          file_path_g_06,
+                                                                                          file_path_m,
+                                                                                          file_path_ele,
+                                                                                          file_path_country)
 
-# load data
+    # unify the spatial dimension of low resolution data to high resolution data
+    match_m_data = data_processor.unify_m_data(g_data[:10], m_data, G_lats, G_lons, M_lats, M_lons)
+    # only keep the range that is the same as G5NR
+    match_m_data = match_m_data[1826:(1826+730), :, :]
+    print('m_data shape:', match_m_data.shape)
+    print('g_data shape: ', g_data.shape)
+    days = list(range(1, 731))
 
-# run downscale on test set
-dscler = downscale.downscaler(generator)
-downscaled_data = dscler.downscale(test_g_data[:n_lag], test_m_data, ele_data,  [G_lats, G_lons, M_lats, M_lons],
-                                   test_days, n_lag, n_pred, task_dim)
+    # subset the data
+    # area subset
+    if not AFG_only:
+        lat_id = area // 3 + 1 if area % 3 != 0 else area // 3
+        lon_id = area % 3 if area % 3 != 0 else 3
+        print('area: ', area, 'lat:', lat_id, 'lon:', lon_id)
+        lat_low, lat_high = id_to_boundary(lat_id)
+        lon_low, lon_high = id_to_boundary(lon_id)
+        print('lat:', lat_low, lat_high)
+        print('lon:', lon_low, lon_high)
+        g_data = g_data[:, lat_low:lat_high, lon_low:lon_high]
+        match_m_data = match_m_data[:, lat_low:lat_high, lon_low:lon_high]
+        ele_data = ele_data[lat_low:lat_high, lon_low:lon_high]
+        G_lats = G_lats[lat_low:lat_high]
+        G_lons = G_lons[lon_low:lon_high]
+    return g_data, match_m_data, ele_data, [G_lats, G_lons], days
+
+def combine_lon_data(a1, a2, a3):
+    a12 = a1[:, :, -30:]
+    a1 = a1[:, :, :-30]
+
+    a21 = a2[:, :, :30]
+    a23 = a2[:, :, -30:]
+    a2 = a2[:, :, 30:-30]
+
+    a32 = a3[:, :, :30]
+    a3 = a3[:, :, 30:]
+    a = np.concatenate([a1, np.mean([a12, a21], axis=0), a2, np.mean([a23, a32], axis=0), a3], axis=2)
+    return a
 
 
-# save downscale data
-np.save(os.path.join(data_cache_path, 'downscaled_data.npy'), downscaled_data)
-#np.save(os.path.join(data_cache_path, 'downscaled_data_fine.npy'), downscaled_data_fine)
+def combine_lat_data(a1, a2, a3):
+    a12 = a1[:, -30:, :]
+    a1 = a1[:, :-30, :]
 
-print('Downscaling Time: ', (time.time() - start) / 60, 'mins')
+    a21 = a2[:, :30, :]
+    a23 = a2[:, -30:, :]
+    a2 = a2[:, 30:-30, :]
+
+    a32 = a3[:, :30, :]
+    a3 = a3[:, 30:, :]
+    a = np.concatenate([a1, np.mean([a12, a21], axis=0), a2, np.mean([a23, a32], axis=0), a3], axis=1)
+    return a
+
+
+def reconstruct_season_data(area_data_list):
+    a123_d = combine_lon_data(area_data_list[1], area_data_list[2], area_data_list[3])
+
+    a456_d = combine_lon_data(area_data_list[4], area_data_list[5], area_data_list[6])
+
+    a789_d = combine_lon_data(area_data_list[7], area_data_list[8], area_data_list[9])
+    d_data = combine_lat_data(a123_d, a456_d, a789_d)
+
+    AFG_d = area_data_list[0]
+    return d_data, AFG_d
+
+
+def rsquared(x, y):
+    slope, intercept, r_value, p_value, std_err = stats.linregress(x, y)
+    return r_value**2, p_value
+
+
+def get_true_data(test_set):
+    target_var = 'DUEXTTAU'
+
+    file_path_g_06 = '/project/mereditf_284/menglin/Downscale_data/MERRA2/G5NR_aerosol_variables_over_MiddleEast_daily_20060516-20070515.nc'
+    file_path_g_05 = '/project/mereditf_284/menglin/Downscale_data/MERRA2/G5NR_aerosol_variables_over_MiddleEast_daily_20050516-20060515.nc'
+    file_path_m = '/project/mereditf_284/menglin/Downscale_data/MERRA2/MERRA2_aerosol_variables_over_MiddleEast_daily_20000516-20180515.nc'
+    file_path_ele = '/project/mereditf_284/menglin/Downscale_data/ELEV/elevation_data.npy'
+
+    file_path_country_AFG = ['/project/mereditf_284/menglin/Downscale_data/Country_shape/AFG_adm/AFG_adm0.shp']
+
+    file_path_country = ['/project/mereditf_284/menglin/Downscale_data/Country_shape/ARE_adm/ARE_adm0.shp',
+                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/IRQ_adm/IRQ_adm0.shp',
+                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/KWT_adm/KWT_adm0.shp',
+                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/QAT_adm/QAT_adm0.shp',
+                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/SAU_adm/SAU_adm0.shp']
+
+    # load input data
+    data_processor = data_processer()
+    g_data, _, [_, _, _, _], _ = data_processor.load_data(target_var,
+                                                          file_path_g_05,
+                                                          file_path_g_06,
+                                                          file_path_m,
+                                                          file_path_ele,
+                                                          file_path_country)
+    g_data_AFG, _, [_, _, _, _], _ = data_processor.load_data(target_var,
+                                                              file_path_g_05,
+                                                              file_path_g_06,
+                                                              file_path_m,
+                                                              file_path_ele,
+                                                              file_path_country_AFG)
+    return g_data[test_set, :, :], g_data_AFG[test_set, :, :]
+
+if __name__ == "__main__":
+    # define parameters
+    data_cache_path = sys.argv[1]
+    n_lag = 20
+    n_pred = 1
+    task_dim = [5, 5]
+    target_var = 'DUEXTTAU'
+    latent_space_dim = 50
+    n_est = 100
+    start = time.time()
+
+    generator = get_generator(n_lag, n_pred, task_dim, latent_space_dim)
+    # in-data evaluation
+    for season in [1, 2, 3, 4]:
+        # read test days
+        season_path = os.path.join(data_cache_path, 'Season'+str(season))
+        test_set = np.load(os.path.join(season_path, 'test_days.npy'))
+        mean_list, var_list = [], []
+        for area in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]:
+            area_path = os.path.join(season_path, 'Area' + str(area))
+            # load model
+            generator.load_weights(os.path.join(area_path, 's2s_model'))
+            dscler = downscale.downscaler(generator)
+            # load data
+            g_data, match_m_data, ele_data, [G_lats, G_lons], days = get_data(area)
+            # downscale each test day
+            downscaled_mean = np.zeros((1, g_data.shape[1], g_data.shape[2]))
+            downscaled_var = np.zeros((1, g_data.shape[1], g_data.shape[2]))
+
+            for t_day in test_set:
+                # downscale 1 day
+                d_day_mean, d_day_var = dscler.downscale(g_data[t_day-n_lag:t_day+1],
+                                                         match_m_data[t_day-n_lag:t_day+2],
+                                                         ele_data,
+                                                         [G_lats, G_lons, None, None],
+                                                         days[t_day - n_lag:t_day + 2],
+                                                         n_lag,
+                                                         n_pred,
+                                                         task_dim,
+                                                         n_est=n_est)
+                downscaled_mean = np.concatenate([downscaled_mean, d_day_mean], axis=0)
+                downscaled_var = np.concatenate([downscaled_var, d_day_var], axis=0)
+            downscaled_mean = downscaled_mean[1:]
+            downscaled_var = downscaled_var[1:]
+            mean_list.append(downscaled_mean)
+            var_list.append(downscaled_var)
+            np.save(os.path.join(area_path, 'downscaled_mean.npy'), downscaled_mean)
+            np.save(os.path.join(area_path, 'downscaled_var.npy'), downscaled_var)
+        # TODO: reconstruct downscaled data to large image and save
+        season_downscaled_mean, season_downscaled_mean_AFG = reconstruct_season_data(mean_list)
+        season_downscaled_var, season_downscaled_var_AFG = reconstruct_season_data(var_list)
+        np.save(os.path.join(season_path, 'season_downscaled_mean.npy'), season_downscaled_mean)
+        np.save(os.path.join(season_path, 'season_downscaled_var.npy'), season_downscaled_var)
+        np.save(os.path.join(season_path, 'season_downscaled_mean_AFG.npy'), season_downscaled_mean_AFG)
+        np.save(os.path.join(season_path, 'season_downscaled_var_AFG.npy'), season_downscaled_var_AFG)
+        # TODO: evaluate and save
+        # get true data
+        g_data, g_data_AFG = get_true_data(test_set)
+        R2_list, RMSE_list, p_list = [], [], []
+        for i, test_day in enumerate(test_set):
+            t_all = np.concatenate([g_data[i].reshape(np.prod(g_data.shape[1:])),
+                                    g_data_AFG[i].reshape(np.prod(g_data_AFG.shape[1:]))])
+            d_all = np.concatenate([season_downscaled_mean[i].reshape(np.prod(season_downscaled_mean.shape[1:])),
+                                    season_downscaled_mean_AFG[i].reshape(np.prod(season_downscaled_mean_AFG.shape[1:]))])
+            r2, p = rsquared(t_all, d_all)
+            rmse = np.sqrt(np.mean(np.square(t_all - d_all)))
+            R2_list.append(r2)
+            RMSE_list.append(rmse)
+            p_list.append(p)
+        output_table = pd.DataFrame({'test_days':test_set, 'R2':R2_list, 'RMSE': RMSE_list, 'P':p_list})
+        output_table.to_csv(os.path.join(season_path, 'evaluate_result.csv'))
+
+    print('Downscaling Time: ', (time.time() - start) / 60, 'mins')
+
+    # TODO: out-data evaluation
