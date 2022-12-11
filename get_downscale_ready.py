@@ -275,8 +275,7 @@ if __name__ == "__main__":
     task_dim = [5, 5]
     target_var = 'DUEXTTAU'
     latent_space_dim = 50
-    n_est = 100
-    start = time.time()
+    n_est = 10
 
     generator = get_generator(n_lag, n_pred, task_dim, latent_space_dim)
     # in-data evaluation
@@ -288,6 +287,7 @@ if __name__ == "__main__":
         for area in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]:
             area_path = os.path.join(season_path, 'Area' + str(area))
             # load model
+            start = time.time()
             generator.load_weights(os.path.join(area_path, 's2s_model'))
             dscler = downscale.downscaler(generator)
             # load data
@@ -295,8 +295,10 @@ if __name__ == "__main__":
             # downscale each test day
             downscaled_mean = np.zeros((1, g_data.shape[1], g_data.shape[2]))
             downscaled_var = np.zeros((1, g_data.shape[1], g_data.shape[2]))
+            print('Init for area time:', (time.time() - start)/60, 'mins')
 
             for t_day in test_set:
+                start = time.time()
                 # downscale 1 day
                 d_day_mean, d_day_var = dscler.downscale(g_data[t_day-n_lag:t_day+1],
                                                          match_m_data[t_day-n_lag:t_day+2],
@@ -309,6 +311,7 @@ if __name__ == "__main__":
                                                          n_est=n_est)
                 downscaled_mean = np.concatenate([downscaled_mean, d_day_mean], axis=0)
                 downscaled_var = np.concatenate([downscaled_var, d_day_var], axis=0)
+                print('One Day Est time:', (time.time() - start)/60, 'mins')
             downscaled_mean = downscaled_mean[1:]
             downscaled_var = downscaled_var[1:]
             mean_list.append(downscaled_mean)
@@ -316,14 +319,17 @@ if __name__ == "__main__":
             np.save(os.path.join(area_path, 'downscaled_mean.npy'), downscaled_mean)
             np.save(os.path.join(area_path, 'downscaled_var.npy'), downscaled_var)
         # TODO: reconstruct downscaled data to large image and save
+        start = time.time()
         season_downscaled_mean, season_downscaled_mean_AFG = reconstruct_season_data(mean_list)
         season_downscaled_var, season_downscaled_var_AFG = reconstruct_season_data(var_list)
         np.save(os.path.join(season_path, 'season_downscaled_mean.npy'), season_downscaled_mean)
         np.save(os.path.join(season_path, 'season_downscaled_var.npy'), season_downscaled_var)
         np.save(os.path.join(season_path, 'season_downscaled_mean_AFG.npy'), season_downscaled_mean_AFG)
         np.save(os.path.join(season_path, 'season_downscaled_var_AFG.npy'), season_downscaled_var_AFG)
+        print('Reconstruct Season Data time:', (time.time() - start) / 60, 'mins')
         # TODO: evaluate and save
         # get true data
+        start = time.time()
         g_data, g_data_AFG = get_true_data(test_set)
         R2_list, RMSE_list, p_list = [], [], []
         for i, test_day in enumerate(test_set):
@@ -339,6 +345,6 @@ if __name__ == "__main__":
         output_table = pd.DataFrame({'test_days':test_set, 'R2':R2_list, 'RMSE': RMSE_list, 'P':p_list})
         output_table.to_csv(os.path.join(season_path, 'evaluate_result.csv'))
 
-    print('Downscaling Time: ', (time.time() - start) / 60, 'mins')
+    print('Evaluation Time: ', (time.time() - start) / 60, 'mins')
 
     # TODO: out-data evaluation
