@@ -11,10 +11,11 @@ from util_tools import downscale
 from tensorflow.python.framework.ops import disable_eager_execution
 disable_eager_execution()
 
-def id_to_boundary(id):
-    if id == 1:
+
+def id_to_boundary(iid):
+    if iid == 1:
         return 0, 135
-    elif id == 2:
+    elif iid == 2:
         return 105, 255
     else:
         return 225, 360
@@ -227,6 +228,59 @@ def get_generator(n_lag, n_pred, task_dim, latent_space_dim):
     generator.compile(optimizer=opt, loss=loss_func(est_mu, est_log_variance))
     return generator
 
+
+def get_area_data(area):
+    target_var = 'DUEXTTAU'
+    area = int(area)
+    AFG_only = False if area != 0 else True
+    file_path_g_06 = '/project/mereditf_284/menglin/Downscale_data/MERRA2/G5NR_aerosol_variables_over_MiddleEast_daily_20060516-20070515.nc'
+    file_path_g_05 = '/project/mereditf_284/menglin/Downscale_data/MERRA2/G5NR_aerosol_variables_over_MiddleEast_daily_20050516-20060515.nc'
+    file_path_m = '/project/mereditf_284/menglin/Downscale_data/MERRA2/MERRA2_aerosol_variables_over_MiddleEast_daily_20000516-20180515.nc'
+    file_path_ele = '/project/mereditf_284/menglin/Downscale_data/ELEV/elevation_data.npy'
+    if AFG_only:
+        file_path_country = ['/project/mereditf_284/menglin/Downscale_data/Country_shape/AFG_adm/AFG_adm0.shp']
+    else:
+        file_path_country = ['/project/mereditf_284/menglin/Downscale_data/Country_shape/ARE_adm/ARE_adm0.shp',
+                             '/project/mereditf_284/menglin/Downscale_data/Country_shape/IRQ_adm/IRQ_adm0.shp',
+                             '/project/mereditf_284/menglin/Downscale_data/Country_shape/KWT_adm/KWT_adm0.shp',
+                             '/project/mereditf_284/menglin/Downscale_data/Country_shape/QAT_adm/QAT_adm0.shp',
+                             '/project/mereditf_284/menglin/Downscale_data/Country_shape/SAU_adm/SAU_adm0.shp']
+
+    # load input data
+    data_processor = data_processer()
+    g_data, m_data, [G_lats, G_lons, M_lats, M_lons], ele_data = data_processor.load_data(target_var,
+                                                                                          file_path_g_05,
+                                                                                          file_path_g_06,
+                                                                                          file_path_m,
+                                                                                          file_path_ele,
+                                                                                          file_path_country)
+
+    # unify the spatial dimension of low resolution data to high resolution data
+    match_m_data = data_processor.unify_m_data(g_data[:10], m_data, G_lats, G_lons, M_lats, M_lons)
+    # only keep the range that is the same as G5NR
+    match_m_data = match_m_data[1826:(1826+730), :, :]
+    print('m_data shape:', match_m_data.shape)
+    print('g_data shape: ', g_data.shape)
+    days = list(range(1, 731))
+
+    # subset the data
+    # area subset
+    if not AFG_only:
+        lat_id = area // 3 + 1 if area % 3 != 0 else area // 3
+        lon_id = area % 3 if area % 3 != 0 else 3
+        print('area: ', area, 'lat:', lat_id, 'lon:', lon_id)
+        lat_low, lat_high = id_to_boundary(lat_id)
+        lon_low, lon_high = id_to_boundary(lon_id)
+        print('lat:', lat_low, lat_high)
+        print('lon:', lon_low, lon_high)
+        g_data = g_data[:, lat_low:lat_high, lon_low:lon_high]
+        match_m_data = match_m_data[:, lat_low:lat_high, lon_low:lon_high]
+        ele_data = ele_data[lat_low:lat_high, lon_low:lon_high]
+        G_lats = G_lats[lat_low:lat_high]
+        G_lons = G_lons[lon_low:lon_high]
+    return g_data, match_m_data, ele_data, [G_lats, G_lons], days
+
+
 if __name__ == '__main__':
     start = time.time()
     # define parameters
@@ -242,7 +296,9 @@ if __name__ == '__main__':
     task_dim = [5, 5]
     target_var = 'DUEXTTAU'
     test_ratio = 0.1
+    epochs = 1
     latent_space_dim = 50
+    n_est = 5
 
     # process data
     # create area dataset
@@ -263,6 +319,41 @@ if __name__ == '__main__':
                                                    save_weights_only=True, monitor='val_loss', mode='min')
     callbacks = [lr_scheduler, early_stopping, best_save]
 
-    history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=100, callbacks=callbacks, validation_split=0.2)
+    history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=epochs, callbacks=callbacks, validation_split=0.2)
     pd.DataFrame(history.history).to_csv(os.path.join(data_cache_path, 'history.csv'))
     print('Training Time: ', (time.time() - start) / 60, 'mins')
+
+    # TODO: downscale
+    test_set = np.load(os.path.join(head, 'test_days.npy'))
+    area_path = data_cache_path
+    # load model
+    start = time.time()
+    generator.load_weights(os.path.join(area_path, 's2s_model'))
+    dscler = downscale.downscaler(generator)
+    # load data
+    g_data, match_m_data, ele_data, [G_lats, G_lons], days = get_area_data(area)
+    # downscale each test day
+    downscaled_mean = np.zeros((1, g_data.shape[1], g_data.shape[2]))
+    downscaled_var = np.zeros((1, g_data.shape[1], g_data.shape[2]))
+    print('Init for area time:', (time.time() - start) / 60, 'mins')
+    # 0.8 mins
+
+    for t_day in test_set:
+        start = time.time()
+        # downscale 1 day
+        d_day_mean, d_day_var = dscler.downscale(g_data[t_day - n_lag:t_day + 1],
+                                                 match_m_data[t_day - n_lag:t_day + 2],
+                                                 ele_data,
+                                                 [G_lats, G_lons, None, None],
+                                                 days[t_day - n_lag:t_day + 2],
+                                                 n_lag,
+                                                 n_pred,
+                                                 task_dim,
+                                                 n_est=n_est)
+        downscaled_mean = np.concatenate([downscaled_mean, d_day_mean], axis=0)
+        downscaled_var = np.concatenate([downscaled_var, d_day_var], axis=0)
+        print('One Day Est time:', (time.time() - start) / 60, 'mins')
+    downscaled_mean = downscaled_mean[1:]
+    downscaled_var = downscaled_var[1:]
+    np.save(os.path.join(area_path, 'downscaled_mean.npy'), downscaled_mean)
+    np.save(os.path.join(area_path, 'downscaled_var.npy'), downscaled_var)

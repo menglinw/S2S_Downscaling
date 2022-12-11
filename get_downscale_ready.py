@@ -277,7 +277,6 @@ if __name__ == "__main__":
     latent_space_dim = 50
     n_est = 1
 
-    generator = get_generator(n_lag, n_pred, task_dim, latent_space_dim)
     # in-data evaluation
     for season in [1, 2, 3, 4]:
         # read test days
@@ -286,39 +285,10 @@ if __name__ == "__main__":
         mean_list, var_list = [], []
         for area in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]:
             area_path = os.path.join(season_path, 'Area' + str(area))
-            # load model
-            start = time.time()
-            generator.load_weights(os.path.join(area_path, 's2s_model'))
-            dscler = downscale.downscaler(generator)
-            # load data
-            g_data, match_m_data, ele_data, [G_lats, G_lons], days = get_data(area)
-            # downscale each test day
-            downscaled_mean = np.zeros((1, g_data.shape[1], g_data.shape[2]))
-            downscaled_var = np.zeros((1, g_data.shape[1], g_data.shape[2]))
-            print('Init for area time:', (time.time() - start)/60, 'mins')
-            # 0.8 mins
-
-            for t_day in test_set:
-                start = time.time()
-                # downscale 1 day
-                d_day_mean, d_day_var = dscler.downscale(g_data[t_day-n_lag:t_day+1],
-                                                         match_m_data[t_day-n_lag:t_day+2],
-                                                         ele_data,
-                                                         [G_lats, G_lons, None, None],
-                                                         days[t_day - n_lag:t_day + 2],
-                                                         n_lag,
-                                                         n_pred,
-                                                         task_dim,
-                                                         n_est=n_est)
-                downscaled_mean = np.concatenate([downscaled_mean, d_day_mean], axis=0)
-                downscaled_var = np.concatenate([downscaled_var, d_day_var], axis=0)
-                print('One Day Est time:', (time.time() - start)/60, 'mins')
-            downscaled_mean = downscaled_mean[1:]
-            downscaled_var = downscaled_var[1:]
+            downscaled_mean = np.load(os.path.join(area_path, 'downscaled_mean.npy'))
+            downscaled_var = np.load(os.path.join(area_path, 'downscaled_var.npy'))
             mean_list.append(downscaled_mean)
             var_list.append(downscaled_var)
-            np.save(os.path.join(area_path, 'downscaled_mean.npy'), downscaled_mean)
-            np.save(os.path.join(area_path, 'downscaled_var.npy'), downscaled_var)
         # TODO: reconstruct downscaled data to large image and save
         start = time.time()
         season_downscaled_mean, season_downscaled_mean_AFG = reconstruct_season_data(mean_list)

@@ -1,5 +1,5 @@
 #!/bin/bash
-save_path=/scratch1/menglinw/Results/12_6_1
+save_path=/scratch1/menglinw/test
 cur_path=`pwd`
 
 # run data processing script
@@ -28,4 +28,10 @@ done
 
 # downscale
 echo $train_jids
+cp batch_run.sh $save_path/evaluate.sh
+cd $save_path
+echo "python3 /scratch1/menglinw/S2S_Downscaling/get_downscale_ready.py $save_path">>evaluate.sh
+sbatch --dependency=afterok$train_jids evaluate.sh
+echo "Submited Evaluation"
+
 #sbatch --dependency=afterok$train_jids YY.sh
