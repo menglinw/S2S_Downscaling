@@ -335,11 +335,10 @@ if __name__ == '__main__':
     # downscale each test day
     downscaled_mean = np.zeros((1, g_data.shape[1], g_data.shape[2]))
     downscaled_var = np.zeros((1, g_data.shape[1], g_data.shape[2]))
-    print('Init for area time:', (time.time() - start) / 60, 'mins')
+
     # 0.8 mins
 
     for t_day in test_set:
-        start = time.time()
         # downscale 1 day
         d_day_mean, d_day_var = dscler.downscale(g_data[t_day - n_lag:t_day + 1],
                                                  match_m_data[t_day - n_lag:t_day + 2],
@@ -352,8 +351,8 @@ if __name__ == '__main__':
                                                  n_est=n_est)
         downscaled_mean = np.concatenate([downscaled_mean, d_day_mean], axis=0)
         downscaled_var = np.concatenate([downscaled_var, d_day_var], axis=0)
-        print('One Day Est time:', (time.time() - start) / 60, 'mins')
-    downscaled_mean = downscaled_mean[1:]
-    downscaled_var = downscaled_var[1:]
+    downscaled_mean = downscaled_mean[1:].filled(0)
+    downscaled_var = downscaled_var[1:].filled(0)
     np.save(os.path.join(area_path, 'downscaled_mean.npy'), downscaled_mean)
     np.save(os.path.join(area_path, 'downscaled_var.npy'), downscaled_var)
+    print('Downscale Time:', (time.time() - start) / 60, 'mins')
