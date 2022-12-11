@@ -275,7 +275,7 @@ if __name__ == "__main__":
     task_dim = [5, 5]
     target_var = 'DUEXTTAU'
     latent_space_dim = 50
-    n_est = 10
+    n_est = 1
 
     generator = get_generator(n_lag, n_pred, task_dim, latent_space_dim)
     # in-data evaluation
@@ -296,6 +296,7 @@ if __name__ == "__main__":
             downscaled_mean = np.zeros((1, g_data.shape[1], g_data.shape[2]))
             downscaled_var = np.zeros((1, g_data.shape[1], g_data.shape[2]))
             print('Init for area time:', (time.time() - start)/60, 'mins')
+            # 0.8 mins
 
             for t_day in test_set:
                 start = time.time()
