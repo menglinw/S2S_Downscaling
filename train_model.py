@@ -256,9 +256,10 @@ def get_area_data(area):
                                                                                           file_path_country)
 
     # unify the spatial dimension of low resolution data to high resolution data
-    match_m_data = data_processor.unify_m_data(g_data[:10], m_data, G_lats, G_lons, M_lats, M_lons)
+    match_m_data_all = data_processor.unify_m_data(g_data[:10], m_data, G_lats, G_lons, M_lats, M_lons)
     # only keep the range that is the same as G5NR
-    match_m_data = match_m_data[1826:(1826+730), :, :]
+    match_m_data = match_m_data_all[1826:(1826+730), :, :]
+    match_m_data_all = match_m_data_all[1826:(1826+365*3), :, :]
     print('m_data shape:', match_m_data.shape)
     print('g_data shape: ', g_data.shape)
     days = list(range(1, 731))
@@ -278,7 +279,7 @@ def get_area_data(area):
         ele_data = ele_data[lat_low:lat_high, lon_low:lon_high]
         G_lats = G_lats[lat_low:lat_high]
         G_lons = G_lons[lon_low:lon_high]
-    return g_data, match_m_data, ele_data, [G_lats, G_lons], days
+    return g_data, match_m_data, ele_data, [G_lats, G_lons], days, match_m_data_all
 
 
 if __name__ == '__main__':
@@ -297,7 +298,7 @@ if __name__ == '__main__':
     target_var = 'DUEXTTAU'
     test_ratio = 0.1
     epochs = 1
-    latent_space_dim = 50
+    latent_space_dim = 5
     n_est = 5
 
     # process data
@@ -318,41 +319,63 @@ if __name__ == '__main__':
     best_save = tf.keras.callbacks.ModelCheckpoint(os.path.join(data_cache_path, 's2s_model'), save_best_only=True,
                                                    save_weights_only=True, monitor='val_loss', mode='min')
     callbacks = [lr_scheduler, early_stopping, best_save]
+    if 's2s_model.index' not in os.listdir(data_cache_path):
+        history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=epochs, callbacks=callbacks, validation_split=0.2)
+        pd.DataFrame(history.history).to_csv(os.path.join(data_cache_path, 'history.csv'))
+        print('Training Time: ', (time.time() - start) / 60, 'mins')
+    else:
+        print('Model is trained, skip model training!')
 
-    history = generator.fit([X_high, X_low, X_ele, X_other], Y, epochs=epochs, callbacks=callbacks, validation_split=0.2)
-    pd.DataFrame(history.history).to_csv(os.path.join(data_cache_path, 'history.csv'))
-    print('Training Time: ', (time.time() - start) / 60, 'mins')
 
-    # TODO: downscale
-    test_set = np.load(os.path.join(head, 'test_days.npy'))
-    area_path = data_cache_path
+
+    # in-data downscale
     # load model
-    start = time.time()
-    generator.load_weights(os.path.join(area_path, 's2s_model'))
+    generator.load_weights(os.path.join(data_cache_path, 's2s_model'))
     dscler = downscale.downscaler(generator)
+    area_path = data_cache_path
     # load data
-    g_data, match_m_data, ele_data, [G_lats, G_lons], days = get_area_data(area)
-    # downscale each test day
-    downscaled_mean = np.zeros((1, g_data.shape[1], g_data.shape[2]))
-    downscaled_var = np.zeros((1, g_data.shape[1], g_data.shape[2]))
+    g_data, match_m_data, ele_data, [G_lats, G_lons], days, match_m_data_all = get_area_data(area)
+    if 'downscaled_mean.npy' not in os.listdir(data_cache_path) \
+            or 'downscaled_var.npy' not in os.listdir(data_cache_path):
+        test_set = np.load(os.path.join(head, 'test_days.npy'))
 
-    # 0.8 mins
 
-    for t_day in test_set:
-        # downscale 1 day
-        d_day_mean, d_day_var = dscler.downscale(g_data[t_day - n_lag:t_day + 1],
-                                                 match_m_data[t_day - n_lag:t_day + 2],
-                                                 ele_data,
-                                                 [G_lats, G_lons, None, None],
-                                                 days[t_day - n_lag:t_day + 2],
-                                                 n_lag,
-                                                 n_pred,
-                                                 task_dim,
-                                                 n_est=n_est)
-        downscaled_mean = np.concatenate([downscaled_mean, d_day_mean], axis=0)
-        downscaled_var = np.concatenate([downscaled_var, d_day_var], axis=0)
-    downscaled_mean = downscaled_mean[1:].filled(0)
-    downscaled_var = downscaled_var[1:].filled(0)
-    np.save(os.path.join(area_path, 'downscaled_mean.npy'), downscaled_mean)
-    np.save(os.path.join(area_path, 'downscaled_var.npy'), downscaled_var)
-    print('Downscale Time:', (time.time() - start) / 60, 'mins')
+        start = time.time()
+
+        # downscale each test day
+        downscaled_mean = np.zeros((1, g_data.shape[1], g_data.shape[2]))
+        downscaled_var = np.zeros((1, g_data.shape[1], g_data.shape[2]))
+        for t_day in test_set:
+            # downscale 1 day
+            d_day_mean, d_day_var = dscler.downscale(g_data[t_day - n_lag:t_day + 1],
+                                                     match_m_data[t_day - n_lag:t_day + 2],
+                                                     ele_data,
+                                                     [G_lats, G_lons, None, None],
+                                                     days[t_day - n_lag:t_day + 2],
+                                                     n_lag,
+                                                     n_pred,
+                                                     task_dim,
+                                                     n_est=n_est)
+            downscaled_mean = np.concatenate([downscaled_mean, d_day_mean], axis=0)
+            downscaled_var = np.concatenate([downscaled_var, d_day_var], axis=0)
+        downscaled_mean = downscaled_mean[1:].filled(0)
+        downscaled_var = downscaled_var[1:].filled(0)
+        np.save(os.path.join(area_path, 'downscaled_mean.npy'), downscaled_mean)
+        np.save(os.path.join(area_path, 'downscaled_var.npy'), downscaled_var)
+        print('In Data Downscale Time:', (time.time() - start) / 60, 'mins')
+    else:
+        print('In Data Downsclae Skipped!')
+
+    # out data downscale
+'''    days = list(range(1, match_m_data_all.shape[0]+1))
+    d_day_mean, d_day_var = dscler.downscale(g_data[-n_lag:],
+                                             match_m_data_all[-(n_lag+365):],
+                                             ele_data,
+                                             [G_lats, G_lons, None, None],
+                                             days[730-n_lag:],
+                                             n_lag,
+                                             n_pred,
+                                             task_dim,
+                                             n_est=n_est)
+    np.save(os.path.join(area_path, 'out_downscaled_mean.npy'), d_day_mean.filled(0))
+    np.save(os.path.join(area_path, 'out_downscaled_var.npy'), d_day_var.filled(0))'''
