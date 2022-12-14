@@ -282,7 +282,7 @@ if __name__ == "__main__":
     n_pred = 1
     task_dim = [5, 5]
     target_var = 'DUEXTTAU'
-    latent_space_dim = 5
+    latent_space_dim = 10
     n_est = 1
 
     # in-data evaluation
@@ -290,21 +290,21 @@ if __name__ == "__main__":
         # read test days
         season_path = os.path.join(data_cache_path, 'Season'+str(season))
         test_set = np.load(os.path.join(season_path, 'test_days.npy'))
-        mean_list, var_list = [], []
+        mean_list = []
         for area in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]:
             area_path = os.path.join(season_path, 'Area' + str(area))
             downscaled_mean = np.load(os.path.join(area_path, 'downscaled_mean.npy'))
-            downscaled_var = np.load(os.path.join(area_path, 'downscaled_var.npy'))
+            #downscaled_var = np.load(os.path.join(area_path, 'downscaled_var.npy'))
             mean_list.append(downscaled_mean)
-            var_list.append(downscaled_var)
+            #var_list.append(downscaled_var)
         # TODO: reconstruct downscaled data to large image and save
         start = time.time()
         season_downscaled_mean, season_downscaled_mean_AFG = reconstruct_season_data(mean_list)
-        season_downscaled_var, season_downscaled_var_AFG = reconstruct_season_data(var_list)
+        #season_downscaled_var, season_downscaled_var_AFG = reconstruct_season_data(var_list)
         np.save(os.path.join(season_path, 'season_downscaled_mean.npy'), season_downscaled_mean)
-        np.save(os.path.join(season_path, 'season_downscaled_var.npy'), season_downscaled_var)
+        #np.save(os.path.join(season_path, 'season_downscaled_var.npy'), season_downscaled_var)
         np.save(os.path.join(season_path, 'season_downscaled_mean_AFG.npy'), season_downscaled_mean_AFG)
-        np.save(os.path.join(season_path, 'season_downscaled_var_AFG.npy'), season_downscaled_var_AFG)
+        #np.save(os.path.join(season_path, 'season_downscaled_var_AFG.npy'), season_downscaled_var_AFG)
         print('Reconstruct Season Data time:', (time.time() - start) / 60, 'mins')
         # TODO: evaluate and save
         # get true data
@@ -324,18 +324,20 @@ if __name__ == "__main__":
         output_table = pd.DataFrame({'test_days':test_set, 'R2':R2_list, 'RMSE': RMSE_list, 'P':p_list})
         output_table.to_csv(os.path.join(season_path, 'evaluate_result.csv'))
 
-    print('Evaluation Time: ', (time.time() - start) / 60, 'mins')
+    print('Evaluation Time: ', (time.time() - start) / 60, 'mins', flush=True)
 
     # TODO: out of data downscale
+    start_all = time.time()
     generator = get_generator(n_lag, n_pred, task_dim, latent_space_dim)
     # construct init data
     down_g_data, down_AFG_data = get_true_data(list(range(-20, 0)))
-    down_g_var, down_AFG_var = np.zeros_like(down_g_data), np.zeros_like(down_AFG_data)
+    #down_g_var, down_AFG_var = np.zeros_like(down_g_data), np.zeros_like(down_AFG_data)
     for season in [1, 2, 3, 4]:
         season_path = os.path.join(data_cache_path, 'Season'+str(season))
-        mean_list, var_list = [], []
+        mean_list = []
         # within each season, downscale each area
         for area in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]:
+            start = time.time()
             # load area model
             area_path = os.path.join(season_path, 'Area' + str(area))
             generator.load_weights(os.path.join(area_path, 's2s_model'))
@@ -345,27 +347,29 @@ if __name__ == "__main__":
                                                                                         season,
                                                                                         area)
             dscler = downscale.downscaler(generator)
-            d_day_mean, d_day_var = dscler.downscale(area_g_data,
-                                                     match_m_data,
-                                                     ele_data,
-                                                     [G_lats, G_lons, None, None],
-                                                     days,
-                                                     n_lag,
-                                                     n_pred,
-                                                     task_dim,
-                                                     n_est=n_est)
+            d_day_mean = dscler.downscale(area_g_data,
+                                          match_m_data,
+                                          ele_data,
+                                          [G_lats, G_lons, None, None],
+                                          days,
+                                          n_lag,
+                                          n_pred,
+                                          task_dim,
+                                          n_est=n_est)
             mean_list.append(d_day_mean)
-            var_list.append(d_day_var)
+            #var_list.append(d_day_var)
+            print('Processed Season:', season, ' Area: ', area, flush=True)
+            print('Downscale Time: ', (time.time() - start) / 60, 'mins', flush=True)
         out_season_d_mean, out_season_d_mean_AFG = reconstruct_season_data(mean_list)
-        out_season_d_var, out_season_d_var_AFG = reconstruct_season_data(var_list)
+        #out_season_d_var, out_season_d_var_AFG = reconstruct_season_data(var_list)
         down_g_data = np.concatenate([down_g_data, out_season_d_mean], axis=0)
         down_AFG_data = np.concatenate([down_AFG_data, out_season_d_mean_AFG], axis=0)
-        down_g_var = np.concatenate([down_g_var, out_season_d_var], axis=0)
-        down_AFG_var = np.concatenate([down_AFG_var, out_season_d_var_AFG], axis=0)
+        #down_g_var = np.concatenate([down_g_var, out_season_d_var], axis=0)
+        #down_AFG_var = np.concatenate([down_AFG_var, out_season_d_var_AFG], axis=0)
     save_downscaled_data(down_g_data, os.path.join(data_cache_path, 'out_downscaled_g_data.npy'), n_lag)
     save_downscaled_data(down_AFG_data, os.path.join(data_cache_path, 'out_downscaled_AFG_data.npy'), n_lag)
-    save_downscaled_data(down_g_var, os.path.join(data_cache_path, 'out_downscaled_g_var.npy'), n_lag)
-    save_downscaled_data(down_AFG_var, os.path.join(data_cache_path, 'out_downscaled_AFG_var.npy'), n_lag)
-
+    #save_downscaled_data(down_g_var, os.path.join(data_cache_path, 'out_downscaled_g_var.npy'), n_lag)
+    #save_downscaled_data(down_AFG_var, os.path.join(data_cache_path, 'out_downscaled_AFG_var.npy'), n_lag)
+    print('Downscale Time: ', (time.time() - start_all) / 60, 'mins', flush=True)
 
 

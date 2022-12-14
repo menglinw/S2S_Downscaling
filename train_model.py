@@ -297,8 +297,8 @@ if __name__ == '__main__':
     task_dim = [5, 5]
     target_var = 'DUEXTTAU'
     test_ratio = 0.1
-    epochs = 1
-    latent_space_dim = 5
+    epochs = 100
+    latent_space_dim = 10
     n_est = 5
 
     # process data
@@ -344,24 +344,24 @@ if __name__ == '__main__':
 
         # downscale each test day
         downscaled_mean = np.zeros((1, g_data.shape[1], g_data.shape[2]))
-        downscaled_var = np.zeros((1, g_data.shape[1], g_data.shape[2]))
+        #downscaled_var = np.zeros((1, g_data.shape[1], g_data.shape[2]))
         for t_day in test_set:
             # downscale 1 day
-            d_day_mean, d_day_var = dscler.downscale(g_data[t_day - n_lag:t_day + 1],
-                                                     match_m_data[t_day - n_lag:t_day + 2],
-                                                     ele_data,
-                                                     [G_lats, G_lons, None, None],
-                                                     days[t_day - n_lag:t_day + 2],
-                                                     n_lag,
-                                                     n_pred,
-                                                     task_dim,
-                                                     n_est=n_est)
+            d_day_mean = dscler.downscale(g_data[t_day - n_lag:t_day + 1],
+                                          match_m_data[t_day - n_lag:t_day + 2],
+                                          ele_data,
+                                          [G_lats, G_lons, None, None],
+                                          days[t_day - n_lag:t_day + 2],
+                                          n_lag,
+                                          n_pred,
+                                          task_dim,
+                                          n_est=n_est)
             downscaled_mean = np.concatenate([downscaled_mean, d_day_mean], axis=0)
-            downscaled_var = np.concatenate([downscaled_var, d_day_var], axis=0)
+            #downscaled_var = np.concatenate([downscaled_var, d_day_var], axis=0)
         downscaled_mean = downscaled_mean[1:].filled(0)
-        downscaled_var = downscaled_var[1:].filled(0)
+        #downscaled_var = downscaled_var[1:].filled(0)
         np.save(os.path.join(area_path, 'downscaled_mean.npy'), downscaled_mean)
-        np.save(os.path.join(area_path, 'downscaled_var.npy'), downscaled_var)
+        #np.save(os.path.join(area_path, 'downscaled_var.npy'), downscaled_var)
         print('In Data Downscale Time:', (time.time() - start) / 60, 'mins')
     else:
         print('In Data Downsclae Skipped!')
