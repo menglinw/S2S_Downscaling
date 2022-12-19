@@ -14,7 +14,7 @@ if __name__ == '__main__':
     task_dim = [5, 5]
     target_var = 'DUEXTTAU'
     test_ratio = 0.1
-    latent_space_dim = 50
+    random_select = False
 
     data_cache_path = sys.argv[1]
     #AFG_only = True if sys.argv[4] == 'AFG' else False
@@ -30,9 +30,14 @@ if __name__ == '__main__':
         # train/test split
         # get all available days
         # random split into train/test sets
-        avlb_days = set(avlb_days)
-        test_set = set(random.sample(avlb_days, int(len(avlb_days) * test_ratio)))
-        train_set = avlb_days - test_set
+        if random_select:
+            avlb_days = set(avlb_days)
+            test_set = set(random.sample(avlb_days, int(len(avlb_days) * test_ratio)))
+            train_set = avlb_days - test_set
+        else:
+            test_n = int(len(avlb_days)*test_ratio)
+            test_set = avlb_days[-test_n:]
+            train_set = avlb_days[:-test_n]
 
         # create season dir if not exist
         season_path = os.path.join(data_cache_path, 'Season' + str(season))
