@@ -14,7 +14,7 @@ if __name__ == '__main__':
     task_dim = [5, 5]
     target_var = 'DUEXTTAU'
     test_ratio = 0.1
-    random_select = False
+    random_select = True
 
     data_cache_path = sys.argv[1]
     #AFG_only = True if sys.argv[4] == 'AFG' else False
