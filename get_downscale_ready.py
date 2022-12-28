@@ -171,11 +171,11 @@ def get_area_data(down_g_data, down_AFG_data, season, area):
     match_m_data_all = data_processor.unify_m_data(g_data, m_data, G_lats, G_lons, M_lats, M_lons)
     # only keep the range that is the same as G5NR
     season_days = 91 if season != 4 else 92
-    match_m_data = match_m_data_all[(1826+730+(season-1)*91):(1826+730+season_days+(season-1)*91), :, :]
+    match_m_data = match_m_data_all[(1826+730+(season-1)*91-20):(1826+730+season_days+(season-1)*91), :, :]
     print('m_data shape:', match_m_data.shape)
     print('g_data shape: ', g_data.shape)
-    days = list(range(1, 366))
-    days = days[(season-1)*91:season_days+(season-1)*91]
+    days = list(range(346,366)) + list(range(1, 366))
+    days = days[(season-1)*91-20:season_days+(season-1)*91]
 
     # subset the data
     # area subset
@@ -285,48 +285,7 @@ if __name__ == "__main__":
     latent_space_dim = 10
     n_est = 1
 
-    # in-data evaluation
-    for season in [1, 2, 3, 4]:
-        # read test days
-        season_path = os.path.join(data_cache_path, 'Season'+str(season))
-        test_set = np.load(os.path.join(season_path, 'test_days.npy'))
-        mean_list = []
-        for area in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]:
-            area_path = os.path.join(season_path, 'Area' + str(area))
-            downscaled_mean = np.load(os.path.join(area_path, 'downscaled_mean.npy'))
-            #downscaled_var = np.load(os.path.join(area_path, 'downscaled_var.npy'))
-            mean_list.append(downscaled_mean)
-            #var_list.append(downscaled_var)
-        # TODO: reconstruct downscaled data to large image and save
-        start = time.time()
-        season_downscaled_mean, season_downscaled_mean_AFG = reconstruct_season_data(mean_list)
-        #season_downscaled_var, season_downscaled_var_AFG = reconstruct_season_data(var_list)
-        np.save(os.path.join(season_path, 'season_downscaled_mean.npy'), season_downscaled_mean)
-        #np.save(os.path.join(season_path, 'season_downscaled_var.npy'), season_downscaled_var)
-        np.save(os.path.join(season_path, 'season_downscaled_mean_AFG.npy'), season_downscaled_mean_AFG)
-        #np.save(os.path.join(season_path, 'season_downscaled_var_AFG.npy'), season_downscaled_var_AFG)
-        print('Reconstruct Season Data time:', (time.time() - start) / 60, 'mins')
-        # TODO: evaluate and save
-        # get true data
-        start = time.time()
-        g_data, g_data_AFG = get_true_data(test_set)
-        R2_list, RMSE_list, p_list = [], [], []
-        for i, test_day in enumerate(test_set):
-            t_all = np.concatenate([g_data[i].reshape(np.prod(g_data.shape[1:])),
-                                    g_data_AFG[i].reshape(np.prod(g_data_AFG.shape[1:]))])
-            d_all = np.concatenate([season_downscaled_mean[i].reshape(np.prod(season_downscaled_mean.shape[1:])),
-                                    season_downscaled_mean_AFG[i].reshape(np.prod(season_downscaled_mean_AFG.shape[1:]))])
-            r2, p = rsquared(t_all, d_all)
-            rmse = np.sqrt(np.mean(np.square(t_all - d_all)))
-            R2_list.append(r2)
-            RMSE_list.append(rmse)
-            p_list.append(p)
-        output_table = pd.DataFrame({'test_days':test_set, 'R2':R2_list, 'RMSE': RMSE_list, 'P':p_list})
-        output_table.to_csv(os.path.join(season_path, 'evaluate_result.csv'))
-
-    print('Evaluation Time: ', (time.time() - start) / 60, 'mins', flush=True)
-
-    # TODO: out of data downscale
+    # out of data downscale
     start_all = time.time()
     generator = get_generator(n_lag, n_pred, task_dim, latent_space_dim)
     # construct init data
@@ -371,5 +330,49 @@ if __name__ == "__main__":
     #save_downscaled_data(down_g_var, os.path.join(data_cache_path, 'out_downscaled_g_var.npy'), n_lag)
     #save_downscaled_data(down_AFG_var, os.path.join(data_cache_path, 'out_downscaled_AFG_var.npy'), n_lag)
     print('Downscale Time: ', (time.time() - start_all) / 60, 'mins', flush=True)
+
+'''
+    # in-data evaluation
+    for season in [1, 2, 3, 4]:
+        # read test days
+        season_path = os.path.join(data_cache_path, 'Season'+str(season))
+        test_set = np.load(os.path.join(season_path, 'test_days.npy'))
+        mean_list = []
+        for area in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]:
+            area_path = os.path.join(season_path, 'Area' + str(area))
+            downscaled_mean = np.load(os.path.join(area_path, 'downscaled_mean.npy'))
+            #downscaled_var = np.load(os.path.join(area_path, 'downscaled_var.npy'))
+            mean_list.append(downscaled_mean)
+            #var_list.append(downscaled_var)
+        # TODO: reconstruct downscaled data to large image and save
+        start = time.time()
+        season_downscaled_mean, season_downscaled_mean_AFG = reconstruct_season_data(mean_list)
+        #season_downscaled_var, season_downscaled_var_AFG = reconstruct_season_data(var_list)
+        np.save(os.path.join(season_path, 'season_downscaled_mean.npy'), season_downscaled_mean)
+        #np.save(os.path.join(season_path, 'season_downscaled_var.npy'), season_downscaled_var)
+        np.save(os.path.join(season_path, 'season_downscaled_mean_AFG.npy'), season_downscaled_mean_AFG)
+        #np.save(os.path.join(season_path, 'season_downscaled_var_AFG.npy'), season_downscaled_var_AFG)
+        print('Reconstruct Season Data time:', (time.time() - start) / 60, 'mins')
+        # TODO: evaluate and save
+        # get true data
+        start = time.time()
+        g_data, g_data_AFG = get_true_data(test_set)
+        R2_list, RMSE_list, p_list = [], [], []
+        for i, test_day in enumerate(test_set):
+            t_all = np.concatenate([g_data[i].reshape(np.prod(g_data.shape[1:])),
+                                    g_data_AFG[i].reshape(np.prod(g_data_AFG.shape[1:]))])
+            d_all = np.concatenate([season_downscaled_mean[i].reshape(np.prod(season_downscaled_mean.shape[1:])),
+                                    season_downscaled_mean_AFG[i].reshape(np.prod(season_downscaled_mean_AFG.shape[1:]))])
+            r2, p = rsquared(t_all, d_all)
+            rmse = np.sqrt(np.mean(np.square(t_all - d_all)))
+            R2_list.append(r2)
+            RMSE_list.append(rmse)
+            p_list.append(p)
+        output_table = pd.DataFrame({'test_days':test_set, 'R2':R2_list, 'RMSE': RMSE_list, 'P':p_list})
+        output_table.to_csv(os.path.join(season_path, 'evaluate_result.csv'))
+
+    print('Evaluation Time: ', (time.time() - start) / 60, 'mins', flush=True)
+'''
+
 
 
