@@ -175,7 +175,7 @@ def get_area_data(down_g_data, down_AFG_data, season, area):
     print('m_data shape:', match_m_data.shape)
     print('g_data shape: ', g_data.shape)
     days = list(range(346,366)) + list(range(1, 366))
-    days = days[(season-1)*91-20:season_days+(season-1)*91]
+    days = days[(season-1)*91:season_days+20+(season-1)*91]
 
     # subset the data
     # area subset
