@@ -13,4 +13,5 @@ module load conda
 eval "$(conda shell.bash hook)"
 conda activate cGAN_space
 
+which python3
 python3 /scratch1/menglinw/S2S_Downscaling/Cov_evaluate.py
