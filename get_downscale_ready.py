@@ -461,8 +461,8 @@ if __name__ == "__main__":
 
                 get_semivariogram(season_downscaled_mean[i], g_cut_lats, g_cut_lons,
                                   os.path.join(season_path, str(test_day)+'_Downcut_semivariogram.jpg'))
-                get_semivariogram(season_downscaled_mean_AFG[i], AFG_cut_lats,
-                                  os.path.join(season_path, AFG_cut_lons, str(test_day) + '_Downcut_AFG_semivariogram.jpg'))
+                get_semivariogram(season_downscaled_mean_AFG[i], AFG_cut_lats, AFG_cut_lons,
+                                  os.path.join(season_path, str(test_day) + '_Downcut_AFG_semivariogram.jpg'))
             else:
                 get_semivariogram(g_data[i], lats_G, lons_G,
                                   os.path.join(season_path, str(test_day) + '_G5NR_semivariogram.jpg'))
