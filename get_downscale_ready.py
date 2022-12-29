@@ -285,9 +285,9 @@ def country_cut(image_list, country, lats, lons):
     data_processor = data_processer()
     out_list = []
     for image in image_list:
-        image_out, _, _ = data_processor.country_filter(image, lats, lons, country)
+        image_out, lats, lons = data_processor.country_filter(image, lats, lons, country)
         out_list.append(image_out)
-    return out_list
+    return out_list, lats, lons
 
 
 def read_shape(file_path_country):
@@ -435,10 +435,10 @@ if __name__ == "__main__":
         R2_list, RMSE_list, p_list = [], [], []
         shape_G, lats_G, lons_G, shape_AFG, lats_AFG, lons_AFG = get_countryshape_latlon()
         if cut_by_country:
-            g_data = country_cut(g_data, shape_G, lats_G, lons_G)
-            g_data_AFG = country_cut(g_data_AFG, shape_AFG, lats_AFG, lons_AFG)
-            season_downscaled_mean = country_cut(season_downscaled_mean, shape_G, lats_G, lons_G)
-            season_downscaled_mean_AFG = country_cut(season_downscaled_mean_AFG, shape_AFG, lats_AFG, lons_AFG)
+            g_data, g_cut_lats, g_cut_lons = country_cut(g_data, shape_G, lats_G, lons_G)
+            g_data_AFG, AFG_cut_lats, AFG_cut_lons = country_cut(g_data_AFG, shape_AFG, lats_AFG, lons_AFG)
+            season_downscaled_mean, _, _ = country_cut(season_downscaled_mean, shape_G, lats_G, lons_G)
+            season_downscaled_mean_AFG, _, _ = country_cut(season_downscaled_mean_AFG, shape_AFG, lats_AFG, lons_AFG)
 
         for i, test_day in enumerate(test_set):
             t_all = np.concatenate([g_data[i].reshape(np.prod(g_data[i].shape)),
@@ -453,11 +453,27 @@ if __name__ == "__main__":
             RMSE_list.append(rmse)
             p_list.append(p)
             # semivariogram
-            get_semivariogram(g_data[i], lats_G, lons_G, str(test_day)+'_G5NR_semivariogram.jpg')
-            get_semivariogram(g_data_AFG[i], lats_AFG, lons_AFG, str(test_day) + '_G5NR_AFG_semivariogram.jpg')
+            if cut_by_country:
+                get_semivariogram(g_data[i], g_cut_lats, g_cut_lons,
+                                  os.path.join(season_path, str(test_day)+'_G5NRcut_semivariogram.jpg'))
+                get_semivariogram(g_data_AFG[i], AFG_cut_lats, AFG_cut_lons,
+                                  os.path.join(season_path, str(test_day) + '_G5NRcut_AFG_semivariogram.jpg'))
 
-            get_semivariogram(season_downscaled_mean[i], lats_G, lons_G, str(test_day)+'_Down_semivariogram.jpg')
-            get_semivariogram(season_downscaled_mean_AFG[i], lats_AFG, lons_AFG, str(test_day) + '_Down_AFG_semivariogram.jpg')
+                get_semivariogram(season_downscaled_mean[i], g_cut_lats, g_cut_lons,
+                                  os.path.join(season_path, str(test_day)+'_Downcut_semivariogram.jpg'))
+                get_semivariogram(season_downscaled_mean_AFG[i], AFG_cut_lats,
+                                  os.path.join(season_path, AFG_cut_lons, str(test_day) + '_Downcut_AFG_semivariogram.jpg'))
+            else:
+                get_semivariogram(g_data[i], lats_G, lons_G,
+                                  os.path.join(season_path, str(test_day) + '_G5NR_semivariogram.jpg'))
+                get_semivariogram(g_data_AFG[i], lats_AFG, lons_AFG,
+                                  os.path.join(season_path, str(test_day) + '_G5NR_AFG_semivariogram.jpg'))
+
+                get_semivariogram(season_downscaled_mean[i], lats_G, lons_G,
+                                  os.path.join(season_path, str(test_day) + '_Down_semivariogram.jpg'))
+                get_semivariogram(season_downscaled_mean_AFG[i], lats_AFG, lons_AFG,
+                                  os.path.join(season_path, str(test_day) + '_Down_AFG_semivariogram.jpg'))
+
         output_table = pd.DataFrame({'test_days':test_set, 'R2':R2_list, 'RMSE': RMSE_list, 'P':p_list})
         if cut_by_country:
             output_table.to_csv(os.path.join(season_path, 'evaluate_result_cutted.csv'))
