@@ -16,7 +16,8 @@ import xarray as xr
 import rioxarray as rxr
 import geopandas as gpd
 import netCDF4 as nc
-
+from skgstat import Variogram
+from matplotlib import pyplot as plt
 
 # define helper function
 def mapping_tanh(x):
@@ -332,6 +333,16 @@ def get_countryshape_latlon():
     lats_G, lons_G = get_lat_lon(shape_G, g05_data)
     return shape_G, lats_G, lons_G, shape_AFG, lats_AFG, lons_AFG
 
+
+def get_semivariogram(data, lats, lons, title):
+    flat_data = pd.DataFrame({'z': data.reshape(np.prod(data.shape)),
+                         'x': np.repeat(lats, len(lons)),
+                         'y': list(lons) * len(lats)})
+    flat_data.dropna(inplace=True)
+    V1 = Variogram(flat_data[['x', 'y']].values, flat_data.z.values, normalize=False)
+    V1.plot()
+    plt.savefig(title)
+
 if __name__ == "__main__":
     # define parameters
     data_cache_path = sys.argv[1]
@@ -422,8 +433,8 @@ if __name__ == "__main__":
         start = time.time()
         g_data, g_data_AFG = get_true_data(test_set)
         R2_list, RMSE_list, p_list = [], [], []
+        shape_G, lats_G, lons_G, shape_AFG, lats_AFG, lons_AFG = get_countryshape_latlon()
         if cut_by_country:
-            shape_G, lats_G, lons_G, shape_AFG, lats_AFG, lons_AFG = get_countryshape_latlon()
             g_data = country_cut(g_data, shape_G, lats_G, lons_G)
             g_data_AFG = country_cut(g_data_AFG, shape_AFG, lats_AFG, lons_AFG)
             season_downscaled_mean = country_cut(season_downscaled_mean, shape_G, lats_G, lons_G)
@@ -441,6 +452,12 @@ if __name__ == "__main__":
             R2_list.append(r2)
             RMSE_list.append(rmse)
             p_list.append(p)
+            # semivariogram
+            get_semivariogram(g_data[i], lats_G, lons_G, str(test_day)+'_G5NR_semivariogram.jpg')
+            get_semivariogram(g_data_AFG[i], lats_AFG, lons_AFG, str(test_day) + '_G5NR_AFG_semivariogram.jpg')
+
+            get_semivariogram(season_downscaled_mean[i], lats_G, lons_G, str(test_day)+'_Down_semivariogram.jpg')
+            get_semivariogram(season_downscaled_mean_AFG[i], lats_AFG, lons_AFG, str(test_day) + '_Down_AFG_semivariogram.jpg')
         output_table = pd.DataFrame({'test_days':test_set, 'R2':R2_list, 'RMSE': RMSE_list, 'P':p_list})
         if cut_by_country:
             output_table.to_csv(os.path.join(season_path, 'evaluate_result_cutted.csv'))
