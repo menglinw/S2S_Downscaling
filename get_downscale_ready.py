@@ -12,6 +12,10 @@ disable_eager_execution()
 from util_tools.data_loader import data_processer
 import pandas as pd
 from scipy import stats
+import xarray as xr
+import rioxarray as rxr
+import geopandas as gpd
+import netCDF4 as nc
 
 
 # define helper function
@@ -275,6 +279,59 @@ def get_true_data(test_set):
 def save_downscaled_data(d_data, path, n_lag):
     np.save(path, d_data[n_lag:].filled(0))
 
+
+def country_cut(image_list, country, lats, lons):
+    data_processor = data_processer()
+    out_list = []
+    for image in image_list:
+        image_out = data_processor.country_filter(image, lats, lons, country)
+        out_list.append(image_out)
+    return out_list
+
+
+def read_shape(file_path_country):
+    country_shape = gpd.read_file(file_path_country[0])
+    if len(file_path_country) > 1:
+        for country_path in file_path_country[1:]:
+            country_shape = pd.concat([country_shape, gpd.read_file(country_path)])
+    return country_shape
+
+
+def get_lat_lon(country_shape, g05_data):
+    lonmin, latmin, lonmax, latmax = country_shape.total_bounds
+    G_lats = g05_data.variables['lat'][:]
+    G_lons = g05_data.variables['lon'][:]
+    latmin_ind = np.argmin(np.abs(G_lats - latmin))
+    latmax_ind = np.argmin(np.abs(G_lats - latmax))
+    lonmin_ind = np.argmin(np.abs(G_lons - lonmin))
+    lonmax_ind = np.argmin(np.abs(G_lons - lonmax))
+    # load lat&lon of G5NR
+    G_lats = g05_data.variables['lat'][latmin_ind - 1:latmax_ind + 1]
+    G_lons = g05_data.variables['lon'][lonmin_ind:lonmax_ind + 2]
+    return G_lats, G_lons
+
+
+def get_countryshape_latlon():
+    file_path_g_06 = '/project/mereditf_284/menglin/Downscale_data/MERRA2/G5NR_aerosol_variables_over_MiddleEast_daily_20060516-20070515.nc'
+    file_path_g_05 = '/project/mereditf_284/menglin/Downscale_data/MERRA2/G5NR_aerosol_variables_over_MiddleEast_daily_20050516-20060515.nc'
+    file_path_m = '/project/mereditf_284/menglin/Downscale_data/MERRA2/MERRA2_aerosol_variables_over_MiddleEast_daily_20000516-20180515.nc'
+
+    file_path_country_AFG = ['/project/mereditf_284/menglin/Downscale_data/Country_shape/AFG_adm/AFG_adm0.shp']
+
+    file_path_country = ['/project/mereditf_284/menglin/Downscale_data/Country_shape/ARE_adm/ARE_adm0.shp',
+                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/IRQ_adm/IRQ_adm0.shp',
+                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/KWT_adm/KWT_adm0.shp',
+                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/QAT_adm/QAT_adm0.shp',
+                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/SAU_adm/SAU_adm0.shp']
+    shape_AFG = read_shape(file_path_country_AFG)
+    shape_G = read_shape(file_path_country)
+
+    g05_data = nc.Dataset(file_path_g_05)
+    # get outer bound of country shape
+    lats_AFG, lons_AFG = get_lat_lon(shape_AFG, g05_data)
+    lats_G, lons_G = get_lat_lon(shape_G, g05_data)
+    return shape_G, lats_G, lons_G, shape_AFG, lats_AFG, lons_AFG
+
 if __name__ == "__main__":
     # define parameters
     data_cache_path = sys.argv[1]
@@ -284,7 +341,8 @@ if __name__ == "__main__":
     target_var = 'DUEXTTAU'
     latent_space_dim = 10
     n_est = 1
-
+    cut_by_country = True
+    '''
     # out of data downscale
     start_all = time.time()
     generator = get_generator(n_lag, n_pred, task_dim, latent_space_dim)
@@ -330,49 +388,67 @@ if __name__ == "__main__":
     #save_downscaled_data(down_g_var, os.path.join(data_cache_path, 'out_downscaled_g_var.npy'), n_lag)
     #save_downscaled_data(down_AFG_var, os.path.join(data_cache_path, 'out_downscaled_AFG_var.npy'), n_lag)
     print('Downscale Time: ', (time.time() - start_all) / 60, 'mins', flush=True)
+    '''
 
-'''
     # in-data evaluation
     for season in [1, 2, 3, 4]:
         # read test days
         season_path = os.path.join(data_cache_path, 'Season'+str(season))
         test_set = np.load(os.path.join(season_path, 'test_days.npy'))
-        mean_list = []
-        for area in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]:
-            area_path = os.path.join(season_path, 'Area' + str(area))
-            downscaled_mean = np.load(os.path.join(area_path, 'downscaled_mean.npy'))
-            #downscaled_var = np.load(os.path.join(area_path, 'downscaled_var.npy'))
-            mean_list.append(downscaled_mean)
-            #var_list.append(downscaled_var)
-        # TODO: reconstruct downscaled data to large image and save
-        start = time.time()
-        season_downscaled_mean, season_downscaled_mean_AFG = reconstruct_season_data(mean_list)
-        #season_downscaled_var, season_downscaled_var_AFG = reconstruct_season_data(var_list)
-        np.save(os.path.join(season_path, 'season_downscaled_mean.npy'), season_downscaled_mean)
-        #np.save(os.path.join(season_path, 'season_downscaled_var.npy'), season_downscaled_var)
-        np.save(os.path.join(season_path, 'season_downscaled_mean_AFG.npy'), season_downscaled_mean_AFG)
-        #np.save(os.path.join(season_path, 'season_downscaled_var_AFG.npy'), season_downscaled_var_AFG)
-        print('Reconstruct Season Data time:', (time.time() - start) / 60, 'mins')
+        if 'season_downscaled_mean.npy' in os.listdir(season_path) \
+                and 'season_downscaled_mean_AFG.npy' in os.listdir(season_path):
+            season_downscaled_mean = np.load(os.path.join(season_path, 'season_downscaled_mean.npy'))
+            season_downscaled_mean_AFG = np.load(os.path.join(season_path, 'season_downscaled_mean_AFG.npy'))
+            print('Skipped in-data downscale, loaded downscaled data!')
+        else:
+            mean_list = []
+            for area in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]:
+                area_path = os.path.join(season_path, 'Area' + str(area))
+                downscaled_mean = np.load(os.path.join(area_path, 'downscaled_mean.npy'))
+                #downscaled_var = np.load(os.path.join(area_path, 'downscaled_var.npy'))
+                mean_list.append(downscaled_mean)
+                #var_list.append(downscaled_var)
+            # TODO: reconstruct downscaled data to large image and save
+            start = time.time()
+            season_downscaled_mean, season_downscaled_mean_AFG = reconstruct_season_data(mean_list)
+            #season_downscaled_var, season_downscaled_var_AFG = reconstruct_season_data(var_list)
+            np.save(os.path.join(season_path, 'season_downscaled_mean.npy'), season_downscaled_mean)
+            #np.save(os.path.join(season_path, 'season_downscaled_var.npy'), season_downscaled_var)
+            np.save(os.path.join(season_path, 'season_downscaled_mean_AFG.npy'), season_downscaled_mean_AFG)
+            #np.save(os.path.join(season_path, 'season_downscaled_var_AFG.npy'), season_downscaled_var_AFG)
+            print('Reconstruct Season Data time:', (time.time() - start) / 60, 'mins')
         # TODO: evaluate and save
         # get true data
         start = time.time()
         g_data, g_data_AFG = get_true_data(test_set)
         R2_list, RMSE_list, p_list = [], [], []
+        if cut_by_country:
+            shape_G, lats_G, lons_G, shape_AFG, lats_AFG, lons_AFG = get_countryshape_latlon()
+            g_data = country_cut(g_data, shape_G, lats_G, lons_G)
+            g_data_AFG = country_cut(g_data_AFG, shape_AFG, lats_AFG, lons_AFG)
+            season_downscaled_mean = country_cut(season_downscaled_mean, shape_G, lats_G, lons_G)
+            season_downscaled_mean_AFG = country_cut(season_downscaled_mean_AFG, shape_AFG, lats_AFG, lons_AFG)
+
         for i, test_day in enumerate(test_set):
             t_all = np.concatenate([g_data[i].reshape(np.prod(g_data.shape[1:])),
                                     g_data_AFG[i].reshape(np.prod(g_data_AFG.shape[1:]))])
+            t_all = t_all[~np.isnan(t_all)]
             d_all = np.concatenate([season_downscaled_mean[i].reshape(np.prod(season_downscaled_mean.shape[1:])),
                                     season_downscaled_mean_AFG[i].reshape(np.prod(season_downscaled_mean_AFG.shape[1:]))])
+            d_all = d_all[~np.isnan(d_all)]
             r2, p = rsquared(t_all, d_all)
             rmse = np.sqrt(np.mean(np.square(t_all - d_all)))
             R2_list.append(r2)
             RMSE_list.append(rmse)
             p_list.append(p)
         output_table = pd.DataFrame({'test_days':test_set, 'R2':R2_list, 'RMSE': RMSE_list, 'P':p_list})
-        output_table.to_csv(os.path.join(season_path, 'evaluate_result.csv'))
+        if cut_by_country:
+            output_table.to_csv(os.path.join(season_path, 'evaluate_result_cutted.csv'))
+        else:
+            output_table.to_csv(os.path.join(season_path, 'evaluate_result.csv'))
 
     print('Evaluation Time: ', (time.time() - start) / 60, 'mins', flush=True)
-'''
+
 
 
 

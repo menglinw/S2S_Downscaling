@@ -62,3 +62,4 @@ def get_semivariogram(data, lats, lons, title):
     plt.savefig(title)
 
 # TODO: choose day and plot
+for i in range
