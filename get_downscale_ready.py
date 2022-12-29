@@ -284,7 +284,7 @@ def country_cut(image_list, country, lats, lons):
     data_processor = data_processer()
     out_list = []
     for image in image_list:
-        image_out = data_processor.country_filter(image, lats, lons, country)
+        image_out, _, _ = data_processor.country_filter(image, lats, lons, country)
         out_list.append(image_out)
     return out_list
 
