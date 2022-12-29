@@ -430,11 +430,11 @@ if __name__ == "__main__":
             season_downscaled_mean_AFG = country_cut(season_downscaled_mean_AFG, shape_AFG, lats_AFG, lons_AFG)
 
         for i, test_day in enumerate(test_set):
-            t_all = np.concatenate([g_data[i].reshape(np.prod(g_data.shape[1:])),
-                                    g_data_AFG[i].reshape(np.prod(g_data_AFG.shape[1:]))])
+            t_all = np.concatenate([g_data[i].reshape(np.prod(g_data[i].shape)),
+                                    g_data_AFG[i].reshape(np.prod(g_data_AFG[i].shape))])
             t_all = t_all[~np.isnan(t_all)]
-            d_all = np.concatenate([season_downscaled_mean[i].reshape(np.prod(season_downscaled_mean.shape[1:])),
-                                    season_downscaled_mean_AFG[i].reshape(np.prod(season_downscaled_mean_AFG.shape[1:]))])
+            d_all = np.concatenate([season_downscaled_mean[i].reshape(np.prod(season_downscaled_mean[i].shape)),
+                                    season_downscaled_mean_AFG[i].reshape(np.prod(season_downscaled_mean_AFG[i].shape))])
             d_all = d_all[~np.isnan(d_all)]
             r2, p = rsquared(t_all, d_all)
             rmse = np.sqrt(np.mean(np.square(t_all - d_all)))
