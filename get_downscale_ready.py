@@ -285,9 +285,9 @@ def country_cut(image_list, country, lats, lons):
     data_processor = data_processer()
     out_list = []
     for image in image_list:
-        image_out, lats, lons = data_processor.country_filter(image, lats, lons, country)
+        image_out, out_lats, out_lons = data_processor.country_filter(image, lats, lons, country)
         out_list.append(image_out)
-    return out_list, lats, lons
+    return out_list, out_lats, out_lons
 
 
 def read_shape(file_path_country):
