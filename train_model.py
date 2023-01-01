@@ -14,11 +14,11 @@ disable_eager_execution()
 
 def id_to_boundary(iid):
     if iid == 1:
-        return 0, 135
+        return 0, 120
     elif iid == 2:
-        return 105, 255
+        return 120, 240
     else:
-        return 225, 360
+        return 240, 360
 
 
 def get_data(data_cache_path, target_var, n_lag, n_pred, task_dim, train_set, area, AFG_only=False, stride=2):
@@ -137,7 +137,7 @@ def sampling(mu_log_variance):
 
 def loss_func(encoder_mu, encoder_log_variance):
     def vae_reconstruction_loss(y_true, y_predict):
-        reconstruction_loss_factor = 100
+        reconstruction_loss_factor = 500
         reconstruction_loss = tf.keras.backend.mean(tf.keras.backend.abs(y_true - y_predict), axis=[1, 2, 3])
         return reconstruction_loss_factor * reconstruction_loss
 
@@ -291,7 +291,7 @@ if __name__ == '__main__':
     AFG_only = True if int(area) == 0 else False
     train_set = np.load(os.path.join(head, 'train_days.npy'))
 
-    n_lag = 20
+    n_lag = 40
     n_pred = 1
     stride = 2
     task_dim = [5, 5]
@@ -314,8 +314,8 @@ if __name__ == '__main__':
 
     generator = get_generator(n_lag, n_pred, task_dim, latent_space_dim)
     # define callbacks
-    lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=3, factor=0.1)
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=5)
+    lr_scheduler = tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', patience=2, factor=0.1)
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=6)
     best_save = tf.keras.callbacks.ModelCheckpoint(os.path.join(data_cache_path, 's2s_model'), save_best_only=True,
                                                    save_weights_only=True, monitor='val_loss', mode='min')
     callbacks = [lr_scheduler, early_stopping, best_save]

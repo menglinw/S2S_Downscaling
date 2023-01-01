@@ -27,3 +27,4 @@
 12/13/2022,/scratch1/menglinw/Results/12_13_1,"task dim [5, 5], n_lag 20, n pred 1, latent space 10",,,,
 12/18/2022,/scratch1/menglinw/Results/12_18_1,"task dim [5, 5], n_lag 20, n pred 1, latent space 10, sequential in data test",S1结果不错，其他结果将就,,,
 12/27/2022,/scratch1/menglinw/Results/12_27_1,"task dim [5, 5], n_lag 20, n pred 1, latent space 10, random in data test",,,,
+1/1/2023,/scratch1/menglinw/Results/1_1_1,"task dim [5, 5], n_lag 40, n pred 1, latent space 10, sequential in data test, no overlapping, prevent low value=0.8",,,,

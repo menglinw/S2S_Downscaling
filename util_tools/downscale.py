@@ -10,7 +10,7 @@ class downscaler():
     def __init__(self, model):
         self.model = model
 
-    def downscale(self, h_data, l_data, ele_data, lat_lon, days, n_lag, n_pred, task_dim, n_est=100):
+    def downscale(self, h_data, l_data, ele_data, lat_lon, days, n_lag, n_pred, task_dim, n_est=100, min_value=0.6):
         '''
 
         :param h_data: initalization
@@ -39,6 +39,7 @@ class downscaler():
             pred_Y = np.zeros((X_high.shape[0], 1, task_dim[0], task_dim[1]))
             for _ in range(n_est):
                 temp = self.model.predict([X_high, X_low, X_ele, X_other])
+                temp[temp<min_value] = min_value + np.random.random()*0.1
                 pred_Y = np.concatenate([pred_Y, temp], axis=1)
             pred_Y = pred_Y[:, 1:]
             pred_mean = np.mean(pred_Y, axis=1)

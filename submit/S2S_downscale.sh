@@ -1,5 +1,5 @@
 #!/bin/bash
-save_path=/scratch1/menglinw/Results/12_27_1
+save_path=/scratch1/menglinw/Results/1_1_1
 cur_path=`pwd`
 
 # run data processing script

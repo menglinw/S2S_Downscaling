@@ -138,13 +138,13 @@ def get_generator(n_lag, n_pred, task_dim, latent_space_dim):
 
 def id_to_boundary(id):
     if id == 1:
-        return 0, 135
+        return 0, 120
     elif id == 2:
-        return 105, 255
+        return 120, 240
     else:
-        return 225, 360
+        return 240, 360
 
-def get_area_data(down_g_data, down_AFG_data, season, area):
+def get_area_data(down_g_data, down_AFG_data, season, area, n_lag):
     target_var = 'DUEXTTAU'
     area = int(area)
     AFG_only = False if area != 0 else True
@@ -171,7 +171,7 @@ def get_area_data(down_g_data, down_AFG_data, season, area):
                                                                                      file_path_m,
                                                                                      file_path_ele,
                                                                                      file_path_country)
-    g_data = down_AFG_data[-20:] if AFG_only else down_g_data[-20:]
+    g_data = down_AFG_data[-n_lag:] if AFG_only else down_g_data[-n_lag:]
     # unify the spatial dimension of low resolution data to high resolution data
     match_m_data_all = data_processor.unify_m_data(g_data, m_data, G_lats, G_lons, M_lats, M_lons)
     # only keep the range that is the same as G5NR
@@ -199,32 +199,13 @@ def get_area_data(down_g_data, down_AFG_data, season, area):
         G_lons = G_lons[lon_low:lon_high]
     return g_data, match_m_data, ele_data, [G_lats, G_lons], days
 
+
 def combine_lon_data(a1, a2, a3):
-    a12 = a1[:, :, -30:]
-    a1 = a1[:, :, :-30]
-
-    a21 = a2[:, :, :30]
-    a23 = a2[:, :, -30:]
-    a2 = a2[:, :, 30:-30]
-
-    a32 = a3[:, :, :30]
-    a3 = a3[:, :, 30:]
-    a = np.concatenate([a1, np.mean([a12, a21], axis=0), a2, np.mean([a23, a32], axis=0), a3], axis=2)
-    return a
+    return np.concatenate([a1, a2, a3], axis=2)
 
 
 def combine_lat_data(a1, a2, a3):
-    a12 = a1[:, -30:, :]
-    a1 = a1[:, :-30, :]
-
-    a21 = a2[:, :30, :]
-    a23 = a2[:, -30:, :]
-    a2 = a2[:, 30:-30, :]
-
-    a32 = a3[:, :30, :]
-    a3 = a3[:, 30:, :]
-    a = np.concatenate([a1, np.mean([a12, a21], axis=0), a2, np.mean([a23, a32], axis=0), a3], axis=1)
-    return a
+    return np.concatenate([a1, a2, a3], axis=1)
 
 
 def reconstruct_season_data(area_data_list):
@@ -346,60 +327,14 @@ def get_semivariogram(data, lats, lons, title):
 if __name__ == "__main__":
     # define parameters
     data_cache_path = sys.argv[1]
-    n_lag = 20
+    n_lag = 40
     n_pred = 1
     task_dim = [5, 5]
     target_var = 'DUEXTTAU'
     latent_space_dim = 10
     n_est = 1
     cut_by_country = True
-    '''
-    # out of data downscale
-    start_all = time.time()
-    generator = get_generator(n_lag, n_pred, task_dim, latent_space_dim)
-    # construct init data
-    down_g_data, down_AFG_data = get_true_data(list(range(-20, 0)))
-    #down_g_var, down_AFG_var = np.zeros_like(down_g_data), np.zeros_like(down_AFG_data)
-    for season in [1, 2, 3, 4]:
-        season_path = os.path.join(data_cache_path, 'Season'+str(season))
-        mean_list = []
-        # within each season, downscale each area
-        for area in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]:
-            start = time.time()
-            # load area model
-            area_path = os.path.join(season_path, 'Area' + str(area))
-            generator.load_weights(os.path.join(area_path, 's2s_model'))
-            # load area data
-            area_g_data, match_m_data, ele_data, [G_lats, G_lons], days = get_area_data(down_g_data,
-                                                                                        down_AFG_data,
-                                                                                        season,
-                                                                                        area)
-            dscler = downscale.downscaler(generator)
-            d_day_mean = dscler.downscale(area_g_data,
-                                          match_m_data,
-                                          ele_data,
-                                          [G_lats, G_lons, None, None],
-                                          days,
-                                          n_lag,
-                                          n_pred,
-                                          task_dim,
-                                          n_est=n_est)
-            mean_list.append(d_day_mean)
-            #var_list.append(d_day_var)
-            print('Processed Season:', season, ' Area: ', area, flush=True)
-            print('Downscale Time: ', (time.time() - start) / 60, 'mins', flush=True)
-        out_season_d_mean, out_season_d_mean_AFG = reconstruct_season_data(mean_list)
-        #out_season_d_var, out_season_d_var_AFG = reconstruct_season_data(var_list)
-        down_g_data = np.concatenate([down_g_data, out_season_d_mean], axis=0)
-        down_AFG_data = np.concatenate([down_AFG_data, out_season_d_mean_AFG], axis=0)
-        #down_g_var = np.concatenate([down_g_var, out_season_d_var], axis=0)
-        #down_AFG_var = np.concatenate([down_AFG_var, out_season_d_var_AFG], axis=0)
-    save_downscaled_data(down_g_data, os.path.join(data_cache_path, 'out_downscaled_g_data.npy'), n_lag)
-    save_downscaled_data(down_AFG_data, os.path.join(data_cache_path, 'out_downscaled_AFG_data.npy'), n_lag)
-    #save_downscaled_data(down_g_var, os.path.join(data_cache_path, 'out_downscaled_g_var.npy'), n_lag)
-    #save_downscaled_data(down_AFG_var, os.path.join(data_cache_path, 'out_downscaled_AFG_var.npy'), n_lag)
-    print('Downscale Time: ', (time.time() - start_all) / 60, 'mins', flush=True)
-    '''
+
 
     # in-data evaluation
     for season in [1, 2, 3, 4]:
@@ -432,7 +367,7 @@ if __name__ == "__main__":
         # get true data
         start = time.time()
         g_data, g_data_AFG = get_true_data(test_set)
-        R2_list, RMSE_list, p_list = [], [], []
+        R2_list, RMSE_list, R2_g_list, RMSE_g_list, R2_afg_list, RMSE_afg_list = [], [], [], [], [], []
         shape_G, lats_G, lons_G, shape_AFG, lats_AFG, lons_AFG = get_countryshape_latlon()
         if cut_by_country:
             g_data, g_cut_lats, g_cut_lons = country_cut(g_data, shape_G, lats_G, lons_G)
@@ -441,17 +376,34 @@ if __name__ == "__main__":
             season_downscaled_mean_AFG, _, _ = country_cut(season_downscaled_mean_AFG, shape_AFG, lats_AFG, lons_AFG)
 
         for i, test_day in enumerate(test_set):
-            t_all = np.concatenate([g_data[i].reshape(np.prod(g_data[i].shape)),
-                                    g_data_AFG[i].reshape(np.prod(g_data_AFG[i].shape))])
+            t_g = g_data[i].reshape(np.prod(g_data[i].shape))
+            t_g = t_g[~np.isnan(t_g)]
+            t_afg = g_data_AFG[i].reshape(np.prod(g_data_AFG[i].shape))
+            t_afg = t_afg[~np.isnan(t_afg)]
+            t_all = np.concatenate([t_g, t_afg])
             t_all = t_all[~np.isnan(t_all)]
-            d_all = np.concatenate([season_downscaled_mean[i].reshape(np.prod(season_downscaled_mean[i].shape)),
-                                    season_downscaled_mean_AFG[i].reshape(np.prod(season_downscaled_mean_AFG[i].shape))])
+
+            d_g = season_downscaled_mean[i].reshape(np.prod(season_downscaled_mean[i].shape))
+            d_g = d_g[~np.isnan(d_g)]
+            d_afg = season_downscaled_mean_AFG[i].reshape(np.prod(season_downscaled_mean_AFG[i].shape))
+            d_afg = d_afg[~np.isnan(d_afg)]
+            d_all = np.concatenate([d_g, d_afg])
             d_all = d_all[~np.isnan(d_all)]
-            r2, p = rsquared(t_all, d_all)
+
+            r2, _ = rsquared(t_all, d_all)
             rmse = np.sqrt(np.mean(np.square(t_all - d_all)))
             R2_list.append(r2)
             RMSE_list.append(rmse)
-            p_list.append(p)
+
+            r2, _ = rsquared(t_g, d_g)
+            rmse = np.sqrt(np.mean(np.square(t_g - d_g)))
+            R2_g_list.append(r2)
+            RMSE_g_list.append(rmse)
+
+            r2, _ = rsquared(t_afg, d_afg)
+            rmse = np.sqrt(np.mean(np.square(t_afg - d_afg)))
+            R2_afg_list.append(r2)
+            RMSE_afg_list.append(rmse)
             # semivariogram
             if cut_by_country:
                 get_semivariogram(g_data[i], g_cut_lats, g_cut_lons,
@@ -474,13 +426,63 @@ if __name__ == "__main__":
                 get_semivariogram(season_downscaled_mean_AFG[i], lats_AFG, lons_AFG,
                                   os.path.join(season_path, str(test_day) + '_Down_AFG_semivariogram.jpg'))
 
-        output_table = pd.DataFrame({'test_days':test_set, 'R2':R2_list, 'RMSE': RMSE_list, 'P':p_list})
+        output_table = pd.DataFrame({'test_days':test_set, 'R2':R2_list, 'RMSE': RMSE_list,
+                                     'R2_g': R2_g_list, 'RMSE_g': RMSE_g_list,
+                                     'R2_afg': R2_afg_list, 'RMSE_afg': RMSE_afg_list})
         if cut_by_country:
             output_table.to_csv(os.path.join(season_path, 'evaluate_result_cutted.csv'))
         else:
             output_table.to_csv(os.path.join(season_path, 'evaluate_result.csv'))
 
     print('Evaluation Time: ', (time.time() - start) / 60, 'mins', flush=True)
+
+
+    # out of data downscale
+    start_all = time.time()
+    generator = get_generator(n_lag, n_pred, task_dim, latent_space_dim)
+    # construct init data
+    down_g_data, down_AFG_data = get_true_data(list(range(-20, 0)))
+    #down_g_var, down_AFG_var = np.zeros_like(down_g_data), np.zeros_like(down_AFG_data)
+    for season in [1, 2, 3, 4]:
+        season_path = os.path.join(data_cache_path, 'Season'+str(season))
+        mean_list = []
+        # within each season, downscale each area
+        for area in [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]:
+            start = time.time()
+            # load area model
+            area_path = os.path.join(season_path, 'Area' + str(area))
+            generator.load_weights(os.path.join(area_path, 's2s_model'))
+            # load area data
+            area_g_data, match_m_data, ele_data, [G_lats, G_lons], days = get_area_data(down_g_data,
+                                                                                        down_AFG_data,
+                                                                                        season,
+                                                                                        area,
+                                                                                        n_lag)
+            dscler = downscale.downscaler(generator)
+            d_day_mean = dscler.downscale(area_g_data,
+                                          match_m_data,
+                                          ele_data,
+                                          [G_lats, G_lons, None, None],
+                                          days,
+                                          n_lag,
+                                          n_pred,
+                                          task_dim,
+                                          n_est=n_est)
+            mean_list.append(d_day_mean)
+            #var_list.append(d_day_var)
+            print('Processed Season:', season, ' Area: ', area, flush=True)
+            print('Downscale Time: ', (time.time() - start) / 60, 'mins', flush=True)
+        out_season_d_mean, out_season_d_mean_AFG = reconstruct_season_data(mean_list)
+        #out_season_d_var, out_season_d_var_AFG = reconstruct_season_data(var_list)
+        down_g_data = np.concatenate([down_g_data, out_season_d_mean], axis=0)
+        down_AFG_data = np.concatenate([down_AFG_data, out_season_d_mean_AFG], axis=0)
+        #down_g_var = np.concatenate([down_g_var, out_season_d_var], axis=0)
+        #down_AFG_var = np.concatenate([down_AFG_var, out_season_d_var_AFG], axis=0)
+    save_downscaled_data(down_g_data, os.path.join(data_cache_path, 'out_downscaled_g_data.npy'), n_lag)
+    save_downscaled_data(down_AFG_data, os.path.join(data_cache_path, 'out_downscaled_AFG_data.npy'), n_lag)
+    #save_downscaled_data(down_g_var, os.path.join(data_cache_path, 'out_downscaled_g_var.npy'), n_lag)
+    #save_downscaled_data(down_AFG_var, os.path.join(data_cache_path, 'out_downscaled_AFG_var.npy'), n_lag)
+    print('Downscale Time: ', (time.time() - start_all) / 60, 'mins', flush=True)
 
 
 

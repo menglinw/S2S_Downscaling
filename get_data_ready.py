@@ -8,13 +8,13 @@ import os
 
 if __name__ == '__main__':
     # define necessary parameters
-    n_lag = 20
+    n_lag = 40
     n_pred = 1
     stride = 2
     task_dim = [5, 5]
     target_var = 'DUEXTTAU'
     test_ratio = 0.1
-    random_select = True
+    random_select = False
 
     data_cache_path = sys.argv[1]
     #AFG_only = True if sys.argv[4] == 'AFG' else False
