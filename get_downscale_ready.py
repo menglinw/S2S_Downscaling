@@ -176,7 +176,7 @@ def get_area_data(down_g_data, down_AFG_data, season, area, n_lag):
     match_m_data_all = data_processor.unify_m_data(g_data, m_data, G_lats, G_lons, M_lats, M_lons)
     # only keep the range that is the same as G5NR
     season_days = 91 if season != 4 else 92
-    match_m_data = match_m_data_all[(1826+730+(season-1)*91-20):(1826+730+season_days+(season-1)*91), :, :]
+    match_m_data = match_m_data_all[(1826+730+(season-1)*91-n_lag):(1826+730+season_days+(season-1)*91), :, :]
     print('m_data shape:', match_m_data.shape)
     print('g_data shape: ', g_data.shape)
     days = list(range(346,366)) + list(range(1, 366))
@@ -441,7 +441,7 @@ if __name__ == "__main__":
     start_all = time.time()
     generator = get_generator(n_lag, n_pred, task_dim, latent_space_dim)
     # construct init data
-    down_g_data, down_AFG_data = get_true_data(list(range(-20, 0)))
+    down_g_data, down_AFG_data = get_true_data(list(range(-n_lag, 0)))
     #down_g_var, down_AFG_var = np.zeros_like(down_g_data), np.zeros_like(down_AFG_data)
     for season in [1, 2, 3, 4]:
         season_path = os.path.join(data_cache_path, 'Season'+str(season))
