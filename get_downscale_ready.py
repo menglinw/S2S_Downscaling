@@ -179,8 +179,8 @@ def get_area_data(down_g_data, down_AFG_data, season, area, n_lag):
     match_m_data = match_m_data_all[(1826+730+(season-1)*91-n_lag):(1826+730+season_days+(season-1)*91), :, :]
     print('m_data shape:', match_m_data.shape)
     print('g_data shape: ', g_data.shape)
-    days = list(range(346,366)) + list(range(1, 366))
-    days = days[(season-1)*91:season_days+20+(season-1)*91]
+    days = list(range(366-n_lag, 366)) + list(range(1, 366))
+    days = days[(season-1)*91:season_days+n_lag+(season-1)*91]
 
     # subset the data
     # area subset
@@ -335,7 +335,7 @@ if __name__ == "__main__":
     n_est = 1
     cut_by_country = True
 
-
+    '''
     # in-data evaluation
     for season in [1, 2, 3, 4]:
         # read test days
@@ -363,6 +363,7 @@ if __name__ == "__main__":
             np.save(os.path.join(season_path, 'season_downscaled_mean_AFG.npy'), season_downscaled_mean_AFG)
             #np.save(os.path.join(season_path, 'season_downscaled_var_AFG.npy'), season_downscaled_var_AFG)
             print('Reconstruct Season Data time:', (time.time() - start) / 60, 'mins')
+            
         # TODO: evaluate and save
         # get true data
         start = time.time()
@@ -435,7 +436,7 @@ if __name__ == "__main__":
             output_table.to_csv(os.path.join(season_path, 'evaluate_result.csv'))
 
     print('Evaluation Time: ', (time.time() - start) / 60, 'mins', flush=True)
-
+    '''
 
     # out of data downscale
     start_all = time.time()
