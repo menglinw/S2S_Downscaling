@@ -3,8 +3,8 @@ import sys
 import os
 import tensorflow as tf
 import time
-if '../util_tools' not in sys.path:
-    sys.path.append('../util_tools')
+if '/scratch1/menglinw/S2S_Downscaling' not in sys.path:
+    sys.path.append('/scratch1/menglinw/S2S_Downscaling')
 from util_tools.data_loader import data_processer
 import pandas as pd
 from util_tools import downscale
