@@ -4,8 +4,8 @@ import os
 import tensorflow as tf
 import time
 
-if '..' not in sys.path:
-    sys.path.append('..')
+if '/scratch1/menglinw/S2S_Downscaling' not in sys.path:
+    sys.path.append('/scratch1/menglinw/S2S_Downscaling')
 import util_tools
 from util_tools import downscale
 from tensorflow.python.framework.ops import disable_eager_execution
