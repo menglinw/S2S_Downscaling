@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --mem=180GB
+#SBATCH --mem=64GB
 #SBATCH --time=48:00:00
 #SBATCH --account=mereditf_284
 

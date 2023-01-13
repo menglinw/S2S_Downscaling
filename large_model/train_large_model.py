@@ -318,7 +318,7 @@ if __name__ == '__main__':
     task_dim = [5, 5]
     target_var = 'DUEXTTAU'
     test_ratio = 0.1
-    epochs = 100
+    epochs = 2
     latent_space_dim = 10
     n_est = 5
 
