@@ -345,7 +345,7 @@ if __name__ == "__main__":
     n_est = 1
     cut_by_country = True
 
-
+    '''
     # in-data evaluation
     for season in [1, 2, 3, 4]:
         # read test days
@@ -446,7 +446,7 @@ if __name__ == "__main__":
             output_table.to_csv(os.path.join(season_path, 'evaluate_result.csv'))
 
     print('Evaluation Time: ', (time.time() - start) / 60, 'mins', flush=True)
-
+    '''
 
     # out of data downscale
     start_all = time.time()
