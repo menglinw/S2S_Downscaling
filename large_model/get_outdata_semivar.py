@@ -74,14 +74,16 @@ g_data, _, [G_lats, G_lons, M_lats, M_lons], _ = data_processor.load_data(target
                                                                           file_path_g_06,
                                                                           file_path_m,
                                                                           file_path_ele,
-                                                                          file_path_country)
+                                                                          file_path_country,
+                                                                          normalize=False)
 
 afg_data, _, [G_lats2, G_lons2, M_lats2, M_lons2], _ = data_processor.load_data(target_var,
-                                                                          file_path_g_05,
-                                                                          file_path_g_06,
-                                                                          file_path_m,
-                                                                          file_path_ele,
-                                                                          file_path_country_afg)
+                                                                                file_path_g_05,
+                                                                                file_path_g_06,
+                                                                                file_path_m,
+                                                                                file_path_ele,
+                                                                                file_path_country_afg,
+                                                                                normalize=False)
 
 # TODO: load downscaled data
 data_path = '/scratch1/menglinw/Results/1_8_1'
