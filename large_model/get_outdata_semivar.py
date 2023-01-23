@@ -108,7 +108,7 @@ print('Downscaled G datashape:', len(season_downscaled_mean), season_downscaled_
 season_downscaled_mean_AFG, _, _ = country_cut(d_afg_data, afg_shape, G_lats2, G_lons2, target_days,
                                                data_path, '_down_afg_data.tif')
 print('Downscaled AFG datashape:', len(season_downscaled_mean_AFG), season_downscaled_mean_AFG[0].shape)
-'''
+
 for i in range(g_data.shape[0]):
     get_semivariogram(g_data[i], g_cut_lats, g_cut_lons,
                       os.path.join(data_path, str(target_days[i]) + '_true_g_semivariogram.jpg'))
@@ -118,4 +118,3 @@ for i in range(g_data.shape[0]):
                       os.path.join(data_path, str(target_days[i]) + '_down_g_semivariogram.jpg'))
     get_semivariogram(season_downscaled_mean_AFG[i], AFG_cut_lats, AFG_cut_lons,
                       os.path.join(data_path, str(target_days[i]) + '_down_afg_semivariogram.jpg'))
-'''
