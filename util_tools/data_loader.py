@@ -16,7 +16,7 @@ class data_processer():
     def __init__(self):
         pass
 
-    def country_filter(self, sample_image, lats, lons, country_shape):
+    def country_filter(self, sample_image, lats, lons, country_shape, return_obj=False):
         """
         crop the image with a country shape
         :param sample_image: image need to be clopped
@@ -28,7 +28,10 @@ class data_processer():
         """
         data = xr.DataArray(sample_image, dims=('y', 'x'), coords={'y': lats, 'x': lons})
         lidar_clipped = data.rio.set_crs(country_shape.crs).rio.clip(country_shape.geometry)
-        return lidar_clipped.values, lidar_clipped['y'].values, lidar_clipped['x'].values
+        if return_obj:
+            return lidar_clipped.values, lidar_clipped['y'].values, lidar_clipped['x'].values
+        else:
+            return lidar_clipped, lidar_clipped.values, lidar_clipped['y'].values, lidar_clipped['x'].values
 
     def load_data(self, target_variable, file_path_g_05, file_path_g_06, file_path_m, file_path_ele, file_path_country,
                   normalize=True):
