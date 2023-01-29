@@ -346,6 +346,7 @@ if __name__ == "__main__":
     t = 0
     total_down_n = match_m_data_all.shape[0] - n_lag
     season_days = [91, 91, 91, 92]
+    all_days = list(range(365-n_lag, 365)) + list(range(total_down_n))
     while t < total_down_n:
         season = index_to_season(t)
         # load area model
@@ -353,9 +354,9 @@ if __name__ == "__main__":
         area_path = os.path.join(season_path, 'Area' + str(1))
         generator.load_weights(os.path.join(area_path, 's2s_model'))
         dscler = downscale.downscaler(generator)
-        days = list(range(t, (t+season_days[season-1])))
+        days = all_days[t:(t + n_lag + season_days[season-1])]
         d_day_mean = dscler.downscale(down_g_data[-n_lag:],
-                                      match_m_data_all[t:(t+season_days[season-1]+n_lag)],
+                                      match_m_data_all[t:(t + n_lag + season_days[season-1])],
                                       ele_data,
                                       [G_lats, G_lons, None, None],
                                       days,
