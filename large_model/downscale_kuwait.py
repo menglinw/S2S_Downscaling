@@ -355,7 +355,7 @@ if __name__ == "__main__":
         dscler = downscale.downscaler(generator)
         days = list(range(t, (t+season_days[season-1])))
         d_day_mean = dscler.downscale(down_g_data[-n_lag:],
-                                      match_m_data_all[t:(t+season_days[season-1])],
+                                      match_m_data_all[t:(t+season_days[season-1]+n_lag)],
                                       ele_data,
                                       [G_lats, G_lons, None, None],
                                       days,
@@ -366,7 +366,7 @@ if __name__ == "__main__":
         down_g_data = np.concatenate([down_g_data, d_day_mean], axis=0)
         t = t+season_days[season-1]
         # var_list.append(d_day_var)
-        print('Processed Season:', season, ' T: ', t, flush=True)
+        print('Processed Season:', season, ' T: ', t, 'Shape: ', down_g_data.shape, flush=True)
     print('Downscale Time: ', (time.time() - start) / 60, 'mins', flush=True)
 
     save_downscaled_data(down_g_data, os.path.join(data_cache_path, 'downscaled_kuwait_data.npy'), n_lag)
