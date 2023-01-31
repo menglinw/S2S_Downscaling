@@ -361,7 +361,8 @@ def get_empty_raster():
                                                                                 file_path_g_06,
                                                                                 file_path_m,
                                                                                 file_path_ele,
-                                                                                file_path_country)
+                                                                                file_path_country,
+                                                                                normalize=False)
     temp_array = np.zeros_like(ele_data)
     temp_array[:] = np.NaN
     data = xr.DataArray(temp_array, dims=('y', 'x'), coords={'y': G_lats, 'x': G_lons})
