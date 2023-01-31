@@ -384,13 +384,13 @@ if __name__ == "__main__":
             img_G,_, _, _ = data_processor.country_filter(g_data[0], lats_G, lons_G, shape_G, return_obj=True)
             img_AFG, _, _, _ = data_processor.country_filter(g_data_AFG[0], lats_AFG, lons_AFG, shape_AFG, return_obj=True)
             true_img = img_G.combine_first(img_AFG)
-            true_img.rio.set_crs(4326)
+            #true_img.rio.set_crs(4326)
             true_img.rio.to_raster(os.path.join(data_cache_path, 'Season'+str(season)+'_true_' + ".tif"))
 
             D_img_G,_, _, _ = data_processor.country_filter(season_downscaled_mean[0], lats_G, lons_G, shape_G, return_obj=True)
             D_img_AFG, _, _, _ = data_processor.country_filter(season_downscaled_mean_AFG[0], lats_AFG, lons_AFG, shape_AFG, return_obj=True)
             pred_img = D_img_G.combine_first(D_img_AFG)
-            pred_img.rio.set_crs(4326)
+            #pred_img.rio.set_crs(4326)
             pred_img.rio.to_raster(os.path.join(data_cache_path, 'Season'+str(season)+'_pred_' + ".tif"))
 
 
