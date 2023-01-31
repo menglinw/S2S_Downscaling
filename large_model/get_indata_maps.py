@@ -16,6 +16,7 @@ import pandas as pd
 from scipy import stats
 import xarray as xr
 import rioxarray as rxr
+from rioxarray.merge import merge_arrays
 import geopandas as gpd
 import netCDF4 as nc
 from skgstat import Variogram
@@ -383,7 +384,7 @@ if __name__ == "__main__":
             data_processor = data_processer()
             img_G,_, _, _ = data_processor.country_filter(g_data[0], lats_G, lons_G, shape_G, return_obj=True)
             img_AFG, _, _, _ = data_processor.country_filter(g_data_AFG[0], lats_AFG, lons_AFG, shape_AFG, return_obj=True)
-            true_img = rxr.merge.merge_arrays([img_G, img_AFG])
+            true_img = merge_arrays([img_G, img_AFG])
             true_img.rio.set_crs(4326)
             true_img.rio.to_raster(os.path.join(data_cache_path, 'Season'+str(season)+'_true_' + ".tif"))
 
