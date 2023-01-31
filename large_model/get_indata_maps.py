@@ -350,6 +350,10 @@ def get_empty_raster():
                          '/project/mereditf_284/menglin/Downscale_data/Country_shape/KWT_adm/KWT_adm0.shp',
                          '/project/mereditf_284/menglin/Downscale_data/Country_shape/QAT_adm/QAT_adm0.shp',
                          '/project/mereditf_284/menglin/Downscale_data/Country_shape/SAU_adm/SAU_adm0.shp']
+    country_shape = gpd.read_file(file_path_country[0])
+    if len(file_path_country) > 1:
+        for country_path in file_path_country[1:]:
+            country_shape = pd.concat([country_shape, gpd.read_file(country_path)])
 
     # load input data
     _, _, [G_lats, G_lons, M_lats, M_lons], ele_data = data_processor2.load_data(target_var,
@@ -361,7 +365,8 @@ def get_empty_raster():
     temp_array = np.zeros_like(ele_data)
     temp_array[:] = np.NaN
     data = xr.DataArray(temp_array, dims=('y', 'x'), coords={'y': G_lats, 'x': G_lons})
-    return data
+    lidar_clipped = data.rio.set_crs(country_shape.crs).rio.clip(country_shape.geometry)
+    return lidar_clipped
 
 if __name__ == "__main__":
     # define parameters
