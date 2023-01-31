@@ -335,6 +335,34 @@ def get_semivariogram(data, lats, lons, title):
     plt.savefig(title)
 
 
+def get_empty_raster():
+    data_processor2 = data_processer()
+    target_var = 'DUEXTTAU'
+
+    file_path_g_06 = '/project/mereditf_284/menglin/Downscale_data/MERRA2/G5NR_aerosol_variables_over_MiddleEast_daily_20060516-20070515.nc'
+    file_path_g_05 = '/project/mereditf_284/menglin/Downscale_data/MERRA2/G5NR_aerosol_variables_over_MiddleEast_daily_20050516-20060515.nc'
+    file_path_m = '/project/mereditf_284/menglin/Downscale_data/MERRA2/MERRA2_aerosol_variables_over_MiddleEast_daily_20000516-20180515.nc'
+    file_path_ele = '/project/mereditf_284/menglin/Downscale_data/ELEV/elevation_data.npy'
+
+    file_path_country = ['/project/mereditf_284/menglin/Downscale_data/Country_shape/AFG_adm/AFG_adm0.shp',
+                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/ARE_adm/ARE_adm0.shp',
+                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/IRQ_adm/IRQ_adm0.shp',
+                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/KWT_adm/KWT_adm0.shp',
+                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/QAT_adm/QAT_adm0.shp',
+                         '/project/mereditf_284/menglin/Downscale_data/Country_shape/SAU_adm/SAU_adm0.shp']
+
+    # load input data
+    _, _, [G_lats, G_lons, M_lats, M_lons], ele_data = data_processor2.load_data(target_var,
+                                                                                file_path_g_05,
+                                                                                file_path_g_06,
+                                                                                file_path_m,
+                                                                                file_path_ele,
+                                                                                file_path_country)
+    temp_array = np.zeros_like(ele_data)
+    temp_array[:] = np.NaN
+    data = xr.DataArray(temp_array, dims=('y', 'x'), coords={'y': G_lats, 'x': G_lons})
+    return data
+
 if __name__ == "__main__":
     # define parameters
     data_cache_path = sys.argv[1]
@@ -380,17 +408,22 @@ if __name__ == "__main__":
         start = time.time()
         g_data, g_data_AFG = get_true_data(test_set)
         shape_G, lats_G, lons_G, shape_AFG, lats_AFG, lons_AFG = get_countryshape_latlon()
+
         if cut_by_country:
             data_processor = data_processer()
+            true_img = get_empty_raster()
             img_G,_, _, _ = data_processor.country_filter(g_data[0], lats_G, lons_G, shape_G, return_obj=True)
             img_AFG, _, _, _ = data_processor.country_filter(g_data_AFG[0], lats_AFG, lons_AFG, shape_AFG, return_obj=True)
-            true_img = merge_arrays([img_G, img_AFG])
+            true_img = true_img.combine_first(img_G)
+            true_img = true_img.combine_first(img_AFG)
             true_img.rio.set_crs(4326)
             true_img.rio.to_raster(os.path.join(data_cache_path, 'Season'+str(season)+'_true_' + ".tif"))
 
+            pred_img = get_empty_raster()
             D_img_G,_, _, _ = data_processor.country_filter(season_downscaled_mean[0], lats_G, lons_G, shape_G, return_obj=True)
             D_img_AFG, _, _, _ = data_processor.country_filter(season_downscaled_mean_AFG[0], lats_AFG, lons_AFG, shape_AFG, return_obj=True)
-            pred_img = D_img_G.combine_first(D_img_AFG)
+            pred_img = pred_img.combine_first(D_img_AFG)
+            pred_img = pred_img.combine_first(D_img_G)
             pred_img.rio.set_crs(4326)
             pred_img.rio.to_raster(os.path.join(data_cache_path, 'Season'+str(season)+'_pred_' + ".tif"))
 
