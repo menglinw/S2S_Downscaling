@@ -436,7 +436,7 @@ if __name__ == "__main__":
                                   os.path.join(season_path, str(test_day) + '_Down_semivariogram.jpg'))
                 get_semivariogram(season_downscaled_mean_AFG[i], lats_AFG, lons_AFG,
                                   os.path.join(season_path, str(test_day) + '_Down_AFG_semivariogram.jpg'))
-
+        '''
         output_table = pd.DataFrame({'test_days':test_set, 'R2':R2_list, 'RMSE': RMSE_list,
                                      'R2_g': R2_g_list, 'RMSE_g': RMSE_g_list,
                                      'R2_afg': R2_afg_list, 'RMSE_afg': RMSE_afg_list})
@@ -447,7 +447,7 @@ if __name__ == "__main__":
 
     print('Evaluation Time: ', (time.time() - start) / 60, 'mins', flush=True)
 
-    '''
+
     # out of data downscale
     start_all = time.time()
     generator = get_generator(n_lag, n_pred, task_dim, latent_space_dim)
