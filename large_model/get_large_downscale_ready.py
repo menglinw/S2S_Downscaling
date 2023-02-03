@@ -329,7 +329,7 @@ def get_semivariogram(data, lats, lons, title):
                               'x': np.repeat(lats, len(lons)),
                               'y': list(lons) * len(lats)})
     flat_data.dropna(inplace=True)
-    V1 = Variogram(flat_data[['x', 'y']].values, flat_data.z.values, normalize=False)
+    V1 = Variogram(flat_data[['x', 'y']].values, flat_data.z.values, normalize=True)
     V1.plot()
     plt.savefig(title)
 
@@ -345,7 +345,7 @@ if __name__ == "__main__":
     n_est = 1
     cut_by_country = True
 
-    '''
+
     # in-data evaluation
     for season in [1, 2, 3, 4]:
         # read test days
@@ -386,7 +386,7 @@ if __name__ == "__main__":
             season_downscaled_mean, _, _ = country_cut(season_downscaled_mean, shape_G, lats_G, lons_G)
             season_downscaled_mean_AFG, _, _ = country_cut(season_downscaled_mean_AFG, shape_AFG, lats_AFG, lons_AFG)
 
-        for i, test_day in enumerate(test_set):
+        for i, test_day in enumerate(test_set[:1]):
             t_g = g_data[i].reshape(np.prod(g_data[i].shape))
             t_g = t_g[~np.isnan(t_g)]
             t_afg = g_data_AFG[i].reshape(np.prod(g_data_AFG[i].shape))
@@ -446,8 +446,8 @@ if __name__ == "__main__":
             output_table.to_csv(os.path.join(season_path, 'evaluate_result.csv'))
 
     print('Evaluation Time: ', (time.time() - start) / 60, 'mins', flush=True)
-    '''
 
+    '''
     # out of data downscale
     start_all = time.time()
     generator = get_generator(n_lag, n_pred, task_dim, latent_space_dim)
@@ -494,6 +494,7 @@ if __name__ == "__main__":
     # save_downscaled_data(down_g_var, os.path.join(data_cache_path, 'out_downscaled_g_var.npy'), n_lag)
     # save_downscaled_data(down_AFG_var, os.path.join(data_cache_path, 'out_downscaled_AFG_var.npy'), n_lag)
     print('Downscale Time: ', (time.time() - start_all) / 60, 'mins', flush=True)
+    '''
 
 
 
