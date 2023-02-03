@@ -45,7 +45,7 @@ def get_semivariogram(data, lats, lons, title):
                               'x': np.repeat(lats, len(lons)),
                               'y': list(lons) * len(lats)})
     flat_data.dropna(inplace=True)
-    V1 = Variogram(flat_data[['x', 'y']].values, flat_data.z.values, normalize=False)
+    V1 = Variogram(flat_data[['x', 'y']].values, flat_data.z.values, normalize=True)
     V1.plot()
     plt.savefig(title)
 
